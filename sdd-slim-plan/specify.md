@@ -43,6 +43,8 @@
 3. 使用 `prompts/requirement-fetch-task-prompt.md` 启动 requirement-fetch 子代理
    - 外部链接 / 第三方文档优先使用 `librarian`
    - 本地文件 / 仓库文档优先使用 `explorer`
+   - wiki 链接（`wiki.17u.cn` / `toca.17u.cn`）使用 `mcp__tc-wiki__matrix-wiki-get`
+   - 用户的完整输入（包括链接和链接外的补充文本）都应作为需求来源传入子代理
 4. requirement-fetch 子代理必须返回：
    - requirement 标题
    - 原始来源（URL / pasted text / local file）

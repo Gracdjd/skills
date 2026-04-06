@@ -14,7 +14,7 @@ user-invocable: true
 ## 路由
 
 1. 读取 `specify.md`
-2. 使用 `prompts/requirement-fetch-task-prompt.md` 驱动 requirement-fetch 子代理完成需求获取 / 归档（外部链接优先 `librarian`，本地文档优先 `explorer`）
+2. 使用 `prompts/requirement-fetch-task-prompt.md` 驱动 requirement-fetch 子代理完成需求获取 / 归档（外部链接优先 `librarian`，本地文档优先 `explorer`；wiki 链接使用 `mcp__tc-wiki__matrix-wiki-get`）
 3. 使用 `templates/spec.md` 作为 canonical spec 模板
 4. 对单个 `Q*` 的澄清提问参考 `prompts/clarification-question.md`
 5. 对每个 `P*` 的用户确认提问参考 `prompts/point-confirmation-question.md`

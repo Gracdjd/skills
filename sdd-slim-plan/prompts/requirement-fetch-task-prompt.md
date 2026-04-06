@@ -17,10 +17,12 @@ Use this template when `sdd-slim-plan` first acquires and normalizes the require
 
 1. 判断输入来源类型
 2. 如果是链接，按来源类型选择相应 MCP / 工具抓取正文，而不是只返回链接摘要
+   - **wiki 链接**：如果链接域名包含 `wiki.17u.cn` 或 `toca.17u.cn`，必须调用 `mcp__tc-wiki__matrix-wiki-get`（设置 `readSubLink: true`、`readimg: true`）读取正文
 3. 如果是纯文本或本地文档，忠实整理成结构化 markdown
-4. 尽量保留原始标题层级、列表、表格、验收条件、限制与开放问题
-5. 明确标注任何抓取失败、权限限制、缺失附件或上下文不全
-6. 只返回可直接写入 requirement archive 的最终 markdown
+4. 如果输入中既有链接又有补充文本，链接内容抓取后与补充文本**合并**为一份完整的需求文档，不要丢弃任何部分
+5. 尽量保留原始标题层级、列表、表格、验收条件、限制与开放问题
+6. 明确标注任何抓取失败、权限限制、缺失附件或上下文不全
+7. 只返回可直接写入 requirement archive 的最终 markdown
 
 ## 返回格式（必须严格遵守）
 
