@@ -3,7 +3,8 @@
 > Status: planning | needs-user-input | ready | in-progress | implemented | implemented-with-issues | reviewed | reviewed-clean | fix-needed | fixed | blocked
 > Created: YYYY-MM-DD
 > Updated: YYYY-MM-DD
-> Source: <requirements doc path / pasted requirement summary>
+> Requirement Archive: `<feature-name>.requirement.md`
+> Original Source: <requirements doc url / pasted requirement text / local file>
 > Canonical File: `.sdd-slim/<feature-name>.spec.md`
 
 ## 1. Requirement Summary
