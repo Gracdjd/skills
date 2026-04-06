@@ -1,7 +1,7 @@
 # SDD Slim Plan — Specify
 
 > 输入：需求文档链接 / 需求文档 / PRD / 长需求文本 / bug 需求 / 重构需求
-> 中间产物：项目根目录 `<feature-name>.requirement.md`
+> 中间产物：`.sdd-slim/<feature-name>.requirement.md`
 > 输出：`.sdd-slim/<feature>.spec.md`
 
 ## 单文档策略（CRITICAL）
@@ -16,8 +16,9 @@
 
 - 必须先通过 requirement-fetch 子代理获取 / 归一化需求并落盘，再做任何拆分或代码探索
 - 如果输入是链接，requirement-fetch 子代理必须调用相应 MCP / 工具抓取正文，而不是只记录链接
-- 本轮需求归档必须写到项目根目录 `<feature-name>.requirement.md`
+- 本轮需求归档必须写到 `.sdd-slim/<feature-name>.requirement.md`
 - requirement-fetch 必须通过 subagent 执行；外部链接 / 第三方文档优先 `librarian`，本地文件 / 仓库文档优先 `explorer`
+- requirement-fetch 子代理一返回，主代理必须立即把结果落盘；不得在落盘前做额外探索、无关推理或长时间等待
 - 后续拆分、澄清、研究、任务化都只能基于已落盘的 requirement archive 与用户后续补充
 - `sdd-slim-plan` 绝不写产品代码
 - 每个需求点必须编号为 `P1`、`P2`...
@@ -27,6 +28,7 @@
 - 每个 `P*` 在写入 `Task Checklist` 前，必须先调用 **explorer 子代理** 做代码库探索
 - explorer 子代理必须负责给出 grounded 的 HOW 建议
 - 如果 explorer 返回新的未决问题，必须把它们转成 `Q*` 并继续用 `askquestion` 逐个关闭
+- 如果 requirement-fetch 或 explorer 已经暴露阻塞性问题，主代理必须在写完 spec 后立即发出下一个 `askquestion`，不得长时间延后提问
 - 只有当某个 `P*` 已完成代码研究、用户确认、验收标准与验证方式明确后，才能生成 `T*`
 - spec 完成后直接停止；不得询问是否执行 `sdd-slim-implement`
 - 不得自动触发任何其他 skill
@@ -36,7 +38,8 @@
 ### 步骤 1：获取并归档 requirement
 
 1. 根据需求生成 provisional kebab-case 的 `<feature-name>`
-2. 默认 requirement archive 路径：项目根目录 `<feature-name>.requirement.md`
+2. 默认 requirement archive 路径：`.sdd-slim/<feature-name>.requirement.md`
+   - 若 `.sdd-slim/` 不存在，先创建该目录
 3. 使用 `prompts/requirement-fetch-task-prompt.md` 启动 requirement-fetch 子代理
    - 外部链接 / 第三方文档优先使用 `librarian`
    - 本地文件 / 仓库文档优先使用 `explorer`
@@ -46,12 +49,13 @@
    - 获取方式（调用了哪些 MCP / 工具）
    - 归一化后的 markdown 正文
    - 仍然缺失或无法访问的内容
-5. 主代理把子代理返回结果写入 `<feature-name>.requirement.md`
+5. 主代理在子代理返回后立即把结果写入 `.sdd-slim/<feature-name>.requirement.md`
 6. 如果返回 `Follow-up needed before planning` 非 `none`：
    - 继续步骤 2，仅用于定位 / 创建 spec
    - 把每一项转成 `Q*`，写入 `Clarification Log` / `Pending User Input`
    - 将 spec 状态标记为 `needs-user-input`
-   - 写完后直接停止，不得进入需求拆分、代码探索或 `T*` 生成
+   - 在当前轮立即通过 `askquestion` 发出第一个阻塞 `Q*`
+   - 发出问题后直接停止，不得进入需求拆分、代码探索或 `T*` 生成
 7. 如果没有阻塞项，后续 planning 必须先读取这个 requirement archive，并以它作为 canonical requirement input
 
 #### requirement-fetch 子代理约束
@@ -73,13 +77,13 @@ prompt 模板见 `prompts/requirement-fetch-task-prompt.md`。
    - 使用 `askquestion` 让用户选择目标 spec
 4. 如果用户选择了现有 spec，且其 slug 与 provisional `<feature-name>` 不一致：
    - 以该现有 spec 的 slug 作为 canonical `<feature-name>`
-   - 立即把 requirement archive 重命名为 `<canonical-feature-name>.requirement.md`
+   - 立即把 requirement archive 重命名为 `.sdd-slim/<canonical-feature-name>.requirement.md`
    - 后续所有引用都使用重命名后的路径
 5. 如果不存在目标 spec，则用 `templates/spec.md` 创建骨架
 
 ### 步骤 3：拆分需求
 
-先把 `<feature-name>.requirement.md` 拆成：
+先把 `.sdd-slim/<feature-name>.requirement.md` 拆成：
 
 - `Requirement Summary`
 - `Requirement Breakdown`
@@ -97,8 +101,9 @@ prompt 模板见 `prompts/requirement-fetch-task-prompt.md`。
 
 1. 使用 `askquestion`
 2. 一次只问一个问题
-3. 用户回答后立即回写 spec
-4. 明确关闭后再继续后续 `P*`
+3. 如果当前轮刚写完 requirement / spec 且已存在阻塞 `Q*`，必须立刻先问第一个 `Q*`
+4. 用户回答后立即回写 spec
+5. 明确关闭后再继续后续 `P*`
 
 ### 步骤 5：对每个 `P*` 执行“研究 → 用户确认 → 任务化”
 

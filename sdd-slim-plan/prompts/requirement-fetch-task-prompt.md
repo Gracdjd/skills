@@ -8,7 +8,7 @@ Use this template when `sdd-slim-plan` first acquires and normalizes the require
 ## 当前任务
 
 - Feature name: <feature-name>
-- Requirement archive path: `<feature-name>.requirement.md`
+- Requirement archive path: `.sdd-slim/<feature-name>.requirement.md`
 - Related spec path: `.sdd-slim/<feature-name>.spec.md`
 - User-provided source type: <url | pasted-text | local-file | mixed>
 - User-provided source: <原始链接 / 原始文本摘要 / 文件路径>
@@ -50,4 +50,4 @@ Use this template when `sdd-slim-plan` first acquires and normalizes the require
 - 不猜测缺失内容
 - 如果链接无法读取，不要只给摘要；明确写出失败原因与缺口
 - `Follow-up needed before planning` 只写真正阻塞后续 planning 的缺口；无阻塞必须写 `none`
-- 输出必须能直接保存为 `<feature-name>.requirement.md`
+- 输出必须能直接保存为 `.sdd-slim/<feature-name>.requirement.md`
