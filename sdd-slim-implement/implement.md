@@ -16,8 +16,10 @@
 进入实现前，先做一次上下文重置预处理：
 
 - 如果当前环境暴露了可调用的 `clear` / reset / session-reset 工具，先调用一次
-- 如果当前环境**没有**这类工具，不要伪造它；改为把 implement 当成一次 fresh-context pass
-- 无论是否真的存在 `clear`，后续都必须重新读取 spec，并只以“选定 spec + 当前代码”为事实来源
+- 否则，如果当前环境支持 new session / fresh run，优先在新 session 中开始 implement
+- 否则，如果当前环境支持 `compact` / `compress`，可以作为降级方案使用，但必须明确说明它不等价于真正 clear
+- 如果以上能力都没有，不要伪造它们；改为把 implement 当成一次 fresh-context pass
+- 无论走哪条路径，后续都必须重新读取 spec，并只以“选定 spec + 当前代码”为事实来源
 
 ## HARD GATES
 
@@ -34,9 +36,13 @@
 
 ### 步骤 0：执行 context-reset preflight
 
-1. 检查当前环境是否真的提供 `clear` / reset 工具
+1. 检查当前环境是否真的提供 `clear` / reset / session-reset 工具
 2. 有则调用一次
-3. 没有则明确切换成 fresh-context 思维：
+3. 没有则检查是否支持 new session / fresh run：
+   - 支持则在新 session 中重新开始 implement
+4. 如果也不支持新 session，再检查是否支持 `compact` / `compress`：
+   - 支持则执行一次压缩，并明确声明这是 fallback，不是 clear
+5. 如果以上都不支持，则明确切换成 fresh-context 思维：
    - 不依赖 plan 阶段的对话记忆
    - 重新读取 spec
    - 重新读取当前代码

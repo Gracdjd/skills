@@ -2,7 +2,7 @@
 name: sdd-slim-implement
 description: |
   Use when: 已有用户确认过的 canonical `*.spec.md`，现在要严格按文档实现。
-  进入实现前先做 context-reset preflight：若环境提供 `clear` / reset 工具则调用一次；若没有，则把本阶段视为 fresh context。
+  进入实现前先做 context-reset preflight：优先调用 `clear` / reset；若无，则优先开启 new session / fresh run；若仍无，则再用 compact / compress 作为降级，并明确其不等价于真正 clear。
   然后重新读取 spec → 执行 T* → 更新同一文件的 checklist / execution notes → 验证 → 停止。
   可做必要澄清，但不自动进入 review/fix。
 user-invocable: true
@@ -25,8 +25,10 @@ user-invocable: true
 ## 独立性规则
 
 - 本 skill 只能由用户手动调用
-- 开始实现前，若环境支持 `clear` / reset 工具，应先执行一次 context reset
-- 如果当前环境没有 `clear` 工具，不得假设其存在；改为把本阶段视为 fresh context
+- 开始实现前，按顺序执行 context reset preflight：`clear/reset` → `new session/fresh run` → `compact/compress`
+- 如果当前环境没有 `clear` 工具，不得假设其存在
+- 如果环境支持新建 session，应优先以新 session 进入 implement
+- 如果只能 compact / compress，必须明确说明这只是上下文压缩，不等价于真正 clear
 - 如有必要，可以用 `askquestion` 做阻塞澄清
 - 不自动触发 `sdd-slim-review`
 - 不自动触发 `sdd-slim-fix`
