@@ -12,6 +12,10 @@ Use this template when `sdd-slim-plan` explores a single `P*` point.
 - 当前理解: <当前版本的需求理解>
 - 来源: <需求文档章节 / 用户输入摘要>
 
+## 上次探索的不足（仅重新探索时提供）
+
+- <上次探索中不够准确或遗漏的点>
+
 ## 你的任务
 
 1. 搜索与该需求点直接相关的入口文件、现有实现、数据结构、调用链
@@ -40,4 +44,6 @@ Use this template when `sdd-slim-plan` explores a single `P*` point.
 - 不要发明脱离现有项目模式的新架构
 - 如果信息不足，不要硬凑结论
 - 如果存在高风险假设，必须明确写在 `Questions requiring user input`
+- HOW 必须足够具体可落地，不能停留在抽象层面
+- 任务拆分粒度要适中：每个任务应该可以在一次开发会话中完成
 ```
