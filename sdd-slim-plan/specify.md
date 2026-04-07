@@ -14,6 +14,10 @@
 
 ## HARD GATES
 
+- 主代理必须直接基于**当前用户输入**启动 planning；不得先回复“请提供需求来源 / 请选择需求类型 / 您希望规划哪个功能”之类的通用收集话术
+- 如果当前用户输入里含有需求文档链接，主代理必须直接把该链接连同同条消息中的补充文本一起交给 requirement-fetch 子代理处理
+- 如果当前用户输入里没有需求文档链接，但已经包含需求描述、PRD、bug 描述、重构意图或其他可分析内容，主代理必须直接基于这些内容生成 requirement archive
+- 只有在 requirement-fetch 或后续 planning 已经识别出**真正阻塞**的问题时，才允许通过 `askquestion` 提问；不得在开始前用普通对话向用户追问输入类型
 - 必须先通过 requirement-fetch 子代理获取 / 归一化需求并落盘，再做任何拆分或代码探索
 - requirement-fetch 子代理必须先判断：当前输入里是否**真的存在可用的需求文档正文**，并给出 `available | partial | missing` 结论
 - 如果输入是链接，requirement-fetch 子代理必须调用相应 MCP / 工具抓取正文，而不是只记录链接
@@ -27,7 +31,7 @@
 - 每个需求点必须编号为 `P1`、`P2`...
 - 每个歧义点必须编号为 `Q1`、`Q2`...
 - 每个 `Q*` 必须通过 `askquestion` 单独澄清
-- 每个 `P*` 必须至少通过一次 `askquestion` 让用户确认这一点的理解 / 边界 / 预期结果
+- 每个 `P*` 只有在当前输入、requirement archive 与代码研究仍不足以确定边界 / 预期结果 / 实施取舍时，才允许通过 `askquestion` 向用户确认；若已足够明确，不得做例行确认
 - 每个 `P*` 在写入 `Task Checklist` 前，必须先调用 **explorer 子代理** 做代码库探索
 - explorer 子代理必须负责给出 grounded 的 HOW 建议
 - **每个 `P*` 必须逐个顺序处理，严禁并发调用多个 explorer 子代理**
@@ -44,40 +48,48 @@
 
 ### 步骤 1：获取并归档 requirement
 
-1. 根据需求生成 provisional kebab-case 的 `<feature-name>`
-2. 默认 requirement archive 路径：`.sdd-slim/<feature-name>.requirement.md`
+1. 先直接解析当前用户输入，自动识别以下来源组合，而不是反问用户属于哪一种：
+   - 链接（wiki / PRD / 云文档 / 设计稿等）
+   - 粘贴正文
+   - bug 描述
+   - 重构诉求
+   - 伴随元信息（产品 / 开发 / 工时 / 项目等）
+2. 根据需求生成 provisional kebab-case 的 `<feature-name>`
+3. 默认 requirement archive 路径：`.sdd-slim/<feature-name>.requirement.md`
    - 若 `.sdd-slim/` 不存在，先创建该目录
-3. 使用 `prompts/requirement-fetch-task-prompt.md` 启动 requirement-fetch 子代理
-   - 外部链接 / 第三方文档优先使用 `librarian`
-   - 本地文件 / 仓库文档优先使用 `explorer`
-   - wiki 链接（`wiki.17u.cn` / `toca.17u.cn`）使用 `mcp__tc-wiki__matrix-wiki-get`
-   - 用户的完整输入（包括链接和链接外的补充文本）都应作为需求来源传入子代理
-   - 子代理必须先做**来源判定**：区分“正文存在 / 正文部分存在 / 只有元信息或引用无正文”
-   - 子代理必须先做**重复检测**：合并重复来源、折叠重复段落，并记录去重说明
-4. requirement-fetch 子代理必须返回：
-   - requirement 标题
-   - 需求文档可用性（`available | partial | missing`）
-   - 原始来源清单（URL / pasted text / local file / metadata-only）
-   - 获取方式（调用了哪些 MCP / 工具）
-   - 去重说明（如果有）
-   - 归一化后的 markdown 正文
-   - 仍然缺失或无法访问的内容
-5. 主代理在子代理返回后立即把结果写入 `.sdd-slim/<feature-name>.requirement.md`
-6. 如果返回 `Requirement availability` 为 `partial` / `missing`，或 `Follow-up needed before planning` 非 `none`：
-   - 继续步骤 2，仅用于定位 / 创建 spec
-   - 此时 spec 只允许先写：header、`Clarification Log`、`Pending User Input`，以及可选的仅含 `Q*` 的 `Requirement Breakdown`
-   - 在需求正文可用前，不得生成 `P*`、`Research Findings` 或 `T*`
-   - 把每一项转成 `Q*`，写入 `Clarification Log` / `Pending User Input`
-   - 将 spec 状态标记为 `needs-user-input`
-   - 在当前轮立即通过 `askquestion` 发出第一个阻塞 `Q*`
-   - 发出问题后直接停止，不得进入需求拆分、代码探索或 `T*` 生成
-7. 如果没有阻塞项，后续 planning 必须先读取这个 requirement archive，并以它作为 canonical requirement input
+4. 使用 `prompts/requirement-fetch-task-prompt.md` 启动 requirement-fetch 子代理
+    - 外部链接 / 第三方文档优先使用 `librarian`
+    - 本地文件 / 仓库文档优先使用 `explorer`
+    - wiki 链接（`wiki.17u.cn` / `toca.17u.cn`）使用 `mcp__tc-wiki__matrix-wiki-get`
+    - 用户的完整输入（包括链接和链接外的补充文本）都应作为需求来源传入子代理
+    - 子代理必须先做**来源判定**：区分“正文存在 / 正文部分存在 / 只有元信息或引用无正文”
+    - 子代理必须先做**重复检测**：合并重复来源、折叠重复段落，并记录去重说明
+    - 如果没有链接但有可分析文本，也必须直接归一化，不得要求用户重新按某种格式提交
+5. requirement-fetch 子代理必须返回：
+    - requirement 标题
+    - 需求文档可用性（`available | partial | missing`）
+    - 原始来源清单（URL / pasted text / local file / metadata-only）
+    - 获取方式（调用了哪些 MCP / 工具）
+    - 去重说明（如果有）
+    - 归一化后的 markdown 正文
+    - 仍然缺失或无法访问的内容
+6. 主代理在子代理返回后立即把结果写入 `.sdd-slim/<feature-name>.requirement.md`
+7. 如果返回 `Requirement availability` 为 `partial` / `missing`，或 `Follow-up needed before planning` 非 `none`：
+    - 继续步骤 2，仅用于定位 / 创建 spec
+    - 此时 spec 只允许先写：header、`Clarification Log`、`Pending User Input`，以及可选的仅含 `Q*` 的 `Requirement Breakdown`
+    - 在需求正文可用前，不得生成 `P*`、`Research Findings` 或 `T*`
+    - 把每一项转成 `Q*`，写入 `Clarification Log` / `Pending User Input`
+    - 将 spec 状态标记为 `needs-user-input`
+    - 在当前轮立即通过 `askquestion` 发出第一个阻塞 `Q*`
+    - 发出问题后直接停止，不得进入需求拆分、代码探索或 `T*` 生成
+8. 如果没有阻塞项，后续 planning 必须先读取这个 requirement archive，并以它作为 canonical requirement input
 
 #### requirement-fetch 子代理约束
 
 - 只负责获取 / 归一化需求，不做规划
 - 不做 `P*` / `Q*` / `T*` 拆分
 - 不做代码库探索
+- 必须优先尝试利用当前输入中的现有信息完成 requirement 归档，不能先回问“请提供需求来源”
 - 必须先判断输入是否包含可直接用于 planning 的需求正文
 - 必须把元信息（如产品、开发、工时、项目）与需求正文分开整理
 - 如果发现重复来源或重复段落，必须去重并记录去重说明
@@ -149,10 +161,11 @@ prompt 模板见 `prompts/requirement-fetch-task-prompt.md`。
    - 把它们登记到 `Clarification Log` / `Pending User Input`
    - 使用 `askquestion` 逐个询问（参考 `prompts/clarification-question.md`）
    - 回答后必要时重新探索当前 `P*`（回到步骤 1）
-6. 当当前 `P*` 的研究结果已足够清晰且 HOW 已确认正确时：
-   - 使用 `askquestion` 对这一整个 `P*` 做一次用户确认（参考 `prompts/point-confirmation-question.md`）
-   - 这一问必须包含：当前理解、代码依据、建议 HOW、候选任务、建议验证
-7. 用户确认后，才允许把当前 `P*` 写成一个或多个 `T*`
+6. 如果当前 `P*` 仍存在真正阻塞任务化的未决项：
+   - 使用 `askquestion` 就该阻塞项向用户确认（参考 `prompts/point-confirmation-question.md`）
+   - 问题必须聚焦未决边界 / 取舍 / 验收差异，不能做“是否认可当前理解”的例行确认
+   - 用户回答后回写 spec，必要时重新探索当前 `P*`
+7. 当当前 `P*` 的研究结果已足够清晰、HOW 已确认正确，且不存在阻塞性未决项后，才允许把当前 `P*` 写成一个或多个 `T*`
 8. **只有当前 `P*` 完全处理完毕后，才进入下一个 `P*`**
 
 #### explorer 子代理约束
@@ -170,7 +183,7 @@ prompt 模板见 `prompts/explorer-task-prompt.md`。
 
 只有当某个 `P*` 同时满足以下条件时，才生成 `T*`：
 
-- 用户已通过 `askquestion` 确认该点
+- 若存在用户侧阻塞问题，则已通过 `askquestion` 完成确认
 - explorer 已完成研究
 - HOW 已可落地
 - 验收标准可写清楚
