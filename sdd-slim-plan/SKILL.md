@@ -3,6 +3,7 @@ name: sdd-slim-plan
 description: |
   Use when: 用户希望先把需求文档/需求文本整理成单文档 canonical spec。
   该 skill 会先通过 requirement-fetch 子代理获取 / 归一化需求，并保存到 `.sdd-slim/<feature-name>.requirement.md`，再生成或更新 `.sdd-slim/<feature>.spec.md`；不写代码，不自动推进到其他 skill。
+  requirement-fetch 首先要判断当前输入里是否存在可用的需求文档正文，并去重重复来源 / 重复粘贴内容。
   对每个任务点的代码库探索与 HOW 生成，必须交给 explorer 子代理完成；每个 `P*` 点都必须至少通过一次 `askquestion` 获得用户澄清 / 确认。
   每个 `P*` 必须顺序处理（一个接一个），不得并发调用多个 explorer 子代理。
 user-invocable: true
@@ -30,7 +31,9 @@ user-invocable: true
 - 本 skill 只负责生成 / 更新 planning 文档（`.sdd-slim/<feature-name>.requirement.md` + `.sdd-slim/<feature-name>.spec.md`）
 - 不写任何产品代码
 - 需求获取必须先通过 requirement-fetch 子代理完成，并先落盘到 `.sdd-slim/<feature-name>.requirement.md`
+- requirement-fetch 必须先判定需求正文是否存在（`available | partial | missing`）；只有元信息不算完整需求
 - requirement-fetch 子代理一返回，主代理必须立即写入 requirement archive；不得插入无关等待、额外探索或长时间停顿
+- 如果用户输入里有重复链接、重复粘贴段落或“链接 + 同内容补充”，必须先去重再归档
 - 如果存在阻塞 planning 的 follow-up，主代理必须在写完 spec 后立即通过 `askquestion` 发出第一个阻塞问题，然后停止等待用户回答
 - requirement-fetch 必须通过子代理执行；外部链接 / 第三方文档优先 `librarian`，本地文件 / 仓库文档优先 `explorer`
 - 每个 `P*` 都必须至少调用一次 `askquestion`

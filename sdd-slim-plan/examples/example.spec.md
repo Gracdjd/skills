@@ -4,8 +4,10 @@
 > Created: 2026-04-06
 > Updated: 2026-04-06
 > Requirement Archive: `.sdd-slim/checkout-button-loading-state.requirement.md`
-> Original Source: pasted requirement text
+> Requirement Availability: available
+> Original Sources: pasted requirement text
 > Canonical File: `.sdd-slim/checkout-button-loading-state.spec.md`
+> Dedup Notes: none
 
 ## 1. Requirement Summary
 

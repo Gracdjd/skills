@@ -15,7 +15,10 @@
 ## HARD GATES
 
 - 必须先通过 requirement-fetch 子代理获取 / 归一化需求并落盘，再做任何拆分或代码探索
+- requirement-fetch 子代理必须先判断：当前输入里是否**真的存在可用的需求文档正文**，并给出 `available | partial | missing` 结论
 - 如果输入是链接，requirement-fetch 子代理必须调用相应 MCP / 工具抓取正文，而不是只记录链接
+- `产品` / `开发` / `开发工时` / `项目` 等元信息只能视为上下文，**不能单独当作需求文档正文**
+- 如果用户输入里存在重复链接、重复粘贴段落或“链接 + 同内容粘贴”，requirement-fetch 子代理必须先去重，再生成 requirement archive
 - 本轮需求归档必须写到 `.sdd-slim/<feature-name>.requirement.md`
 - requirement-fetch 必须通过 subagent 执行；外部链接 / 第三方文档优先 `librarian`，本地文件 / 仓库文档优先 `explorer`
 - requirement-fetch 子代理一返回，主代理必须立即把结果落盘；不得在落盘前做额外探索、无关推理或长时间等待
@@ -49,15 +52,21 @@
    - 本地文件 / 仓库文档优先使用 `explorer`
    - wiki 链接（`wiki.17u.cn` / `toca.17u.cn`）使用 `mcp__tc-wiki__matrix-wiki-get`
    - 用户的完整输入（包括链接和链接外的补充文本）都应作为需求来源传入子代理
+   - 子代理必须先做**来源判定**：区分“正文存在 / 正文部分存在 / 只有元信息或引用无正文”
+   - 子代理必须先做**重复检测**：合并重复来源、折叠重复段落，并记录去重说明
 4. requirement-fetch 子代理必须返回：
    - requirement 标题
-   - 原始来源（URL / pasted text / local file）
+   - 需求文档可用性（`available | partial | missing`）
+   - 原始来源清单（URL / pasted text / local file / metadata-only）
    - 获取方式（调用了哪些 MCP / 工具）
+   - 去重说明（如果有）
    - 归一化后的 markdown 正文
    - 仍然缺失或无法访问的内容
 5. 主代理在子代理返回后立即把结果写入 `.sdd-slim/<feature-name>.requirement.md`
-6. 如果返回 `Follow-up needed before planning` 非 `none`：
+6. 如果返回 `Requirement availability` 为 `partial` / `missing`，或 `Follow-up needed before planning` 非 `none`：
    - 继续步骤 2，仅用于定位 / 创建 spec
+   - 此时 spec 只允许先写：header、`Clarification Log`、`Pending User Input`，以及可选的仅含 `Q*` 的 `Requirement Breakdown`
+   - 在需求正文可用前，不得生成 `P*`、`Research Findings` 或 `T*`
    - 把每一项转成 `Q*`，写入 `Clarification Log` / `Pending User Input`
    - 将 spec 状态标记为 `needs-user-input`
    - 在当前轮立即通过 `askquestion` 发出第一个阻塞 `Q*`
@@ -69,6 +78,9 @@
 - 只负责获取 / 归一化需求，不做规划
 - 不做 `P*` / `Q*` / `T*` 拆分
 - 不做代码库探索
+- 必须先判断输入是否包含可直接用于 planning 的需求正文
+- 必须把元信息（如产品、开发、工时、项目）与需求正文分开整理
+- 如果发现重复来源或重复段落，必须去重并记录去重说明
 - 必须尽量保留原始结构与语义
 - 如果内容抓取不完整，必须明确记录缺口，不能脑补
 - `Follow-up needed before planning` 只记录真正阻塞后续 planning 的缺口；无阻塞则写 `none`
@@ -100,6 +112,7 @@ prompt 模板见 `prompts/requirement-fetch-task-prompt.md`。
 - 文档型需求必须拆成 `P*` / `Q*`
 - 普通短需求也至少形成 `P1`
 - 只要当前信息不足以形成稳定执行路径，就写成 `Q*`
+- 如果 requirement availability 不是 `available`，则不得进入本步骤
 
 ### 步骤 4：先逐个关闭基础 `Q*`
 

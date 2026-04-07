@@ -4,12 +4,16 @@
 > Created: YYYY-MM-DD
 > Updated: YYYY-MM-DD
 > Requirement Archive: `.sdd-slim/<feature-name>.requirement.md`
-> Original Source: <requirements doc url / pasted requirement text / local file>
+> Requirement Availability: available | partial | missing
+> Original Sources: <requirements doc urls / pasted requirement text / local files / metadata-only context>
 > Canonical File: `.sdd-slim/<feature-name>.spec.md`
+> Dedup Notes: none | <deduped repeated link / repeated pasted block / conflict retained>
 
 ## 1. Requirement Summary
 
 - ...
+
+> If `Requirement Availability` is `partial` or `missing`, this section should only summarize known metadata and confirmed facts. Do not invent missing requirement body.
 
 ## 2. Requirement Breakdown
 
@@ -17,6 +21,8 @@
 | --- | --- | --- | --- | --- | --- |
 | P1 | requirement | ... | ... | ... | draft |
 | Q1 | clarification | ... | ... | ... | pending |
+
+> If `Requirement Availability` is not `available`, this section may temporarily contain only `Q*` rows.
 
 ## 3. Clarification Log
 
