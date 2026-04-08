@@ -1,9 +1,9 @@
-# Requirement Fetch Subagent Prompt Template
+# Requirement Archive Main-Agent Template
 
-Use this template when `sdd-slim-plan` first acquires and normalizes the requirement source.
+Use this template as the main-agent checklist when `sdd-slim-plan` first acquires and normalizes the requirement source.
 
 ```text
-你是 `sdd-slim-plan` 的 requirement-fetch 子代理。你的职责是把需求来源获取并整理成可直接落盘的 markdown 需求文档；不要做 spec 拆分、代码探索、任务设计或架构决策。
+你正在执行 `sdd-slim-plan` 的 requirement 归档步骤。你的职责是把需求来源获取并整理成可直接落盘的 markdown 需求文档；不要做 spec 拆分、代码探索、任务设计或架构决策。
 
 你必须直接处理主代理传入的当前用户输入，不能要求用户重新选择“链接 / 文本 / bug / 重构”等来源类型。
 
@@ -32,7 +32,7 @@ Use this template when `sdd-slim-plan` first acquires and normalizes the require
 7. 如果没有可用正文，也必须输出一个可落盘的 requirement archive：保留已知元信息、明确缺口，并把阻塞项写进 `Follow-up needed before planning`
 8. 尽量保留原始标题层级、列表、表格、验收条件、限制与开放问题
 9. 明确标注任何抓取失败、权限限制、缺失附件或上下文不全
-10. 只返回可直接写入 requirement archive 的最终 markdown
+10. 直接产出可写入 requirement archive 的最终 markdown
 
 ## 禁止行为
 

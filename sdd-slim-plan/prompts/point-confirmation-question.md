@@ -1,6 +1,6 @@
 # Point Confirmation Question Template
 
-Use this only when one `P*` still has a real blocking uncertainty after codebase research has been completed.
+Use this for every `P*` after codebase research has been completed, including simple points that already look clear.
 
 ```text
 question: |
@@ -13,11 +13,12 @@ question: |
   - 候选任务：<candidate tasks>
   - 建议验证：<suggested validations>
 
-  这里仍有一个阻塞 planning 的未决点，请只确认或修正这一点；关闭后我才会把它转成正式任务。
+  请确认或修正这一点；即使当前看起来没有明显歧义，也要先完成这次确认，我才会把它转成正式任务。
 ```
 
 Rules:
 
-- 只有存在真正阻塞任务化的未决项时才使用
+- 每个 `P*` 都要使用一次，简单 `P*` 也不能跳过
 - 一次只确认一个 `P*`
-- 如果用户修正了行为、边界或 HOW，需要回写 spec，必要时重新调用 explorer
+- 如果当前 `P*` 还带有额外阻塞项，问题可以聚焦该阻塞点，但仍需覆盖当前理解与建议 HOW
+- 如果用户修正了行为、边界或 HOW，需要回写 spec，必要时重新调用 subagent

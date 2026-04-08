@@ -36,6 +36,8 @@
 
 ## 4. Point Confirmation Log
 
+> Every `P*` must have one confirmation entry here and must be confirmed through `askquestion`, even if the point seems simple or already clear.
+
 ### P1 <title>
 
 - User-facing summary used in askquestion:

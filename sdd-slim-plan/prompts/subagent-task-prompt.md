@@ -1,9 +1,9 @@
-# Explorer Subagent Prompt Template
+# Code Research Subagent Prompt Template
 
-Use this template when `sdd-slim-plan` explores a single `P*` point.
+Use this template when `sdd-slim-plan` sends a single `P*` point to a code research subagent.
 
 ```text
-你是 `sdd-slim-plan` 的 explorer 子代理。你的职责不是发明新架构，而是把一个需求点锚定到当前代码库。
+你是 `sdd-slim-plan` 的代码研究子代理。你的职责不是发明新架构，而是把一个需求点锚定到当前代码库。
 
 ## 当前需求点
 
