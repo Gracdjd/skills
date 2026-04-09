@@ -17,7 +17,7 @@ user-invocable: true
 ## 路由
 
 1. 读取 `specify.md`
-2. 主代理按 `prompts/requirement-archive-prompt.md` 直接完成需求获取 / 归档（如需抓取外部链接正文，直接调用对应 MCP / 工具；wiki 链接使用 `mcp__tc-wiki__matrix-wiki-get`）
+2. 主代理按 `prompts/requirement-archive-prompt.md` 直接完成需求获取 / 归档（如需抓取外部链接正文，直接调用对应 MCP / 工具；wiki 链接使用 `mcp__hotel-tools__matrix-wiki-get`）
 3. 使用 `templates/spec.md` 作为 canonical spec 模板
 4. 对单个 `Q*` 的澄清提问参考 `prompts/clarification-question.md`
 5. 对每个 `P*` 的用户确认提问参考 `prompts/point-confirmation-question.md`

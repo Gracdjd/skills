@@ -26,7 +26,7 @@ Use this template as the main-agent checklist when `sdd-slim-plan` first acquire
    - 完全重复或明显重复：直接折叠，并在 `Dedup notes` 说明
    - 高度相似但存在实质差异：不要静默合并；在 `Missing / inaccessible content` 或 `Follow-up needed before planning` 中明确冲突，并保留冲突信息
 4. 如果是链接，按来源类型选择相应 MCP / 工具抓取正文，而不是只返回链接摘要
-   - **wiki 链接**：如果链接域名包含 `wiki.17u.cn` 或 `toca.17u.cn`，必须调用 `mcp__tc-wiki__matrix-wiki-get`（设置 `readSubLink: true`、`readimg: true`）读取正文
+   - **wiki 链接**：如果链接域名包含 `wiki.17u.cn` 或 `toca.17u.cn`，必须调用 `mcp__hotel-tools__matrix-wiki-get`（设置 `readSubLink: true`、`readimg: true`）读取正文
 5. 如果是纯文本或本地文档，忠实整理成结构化 markdown
 6. 如果输入中既有链接又有补充文本，链接内容抓取后与补充文本**合并去重**为一份完整的需求文档，不要丢弃任何有效部分
 7. 如果没有可用正文，也必须输出一个可落盘的 requirement archive：保留已知元信息、明确缺口，并把阻塞项写进 `Follow-up needed before planning`

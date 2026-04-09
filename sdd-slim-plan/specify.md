@@ -58,29 +58,29 @@
 3. 默认 requirement archive 路径：`.sdd-slim/<feature-name>.requirement.md`
    - 若 `.sdd-slim/` 不存在，先创建该目录
 4. 主代理按 `prompts/requirement-archive-prompt.md` 直接整理 requirement archive
-    - 如需读取外部链接 / 第三方文档 / 本地文件正文，主代理直接调用相应 MCP / 工具
-    - wiki 链接（`wiki.17u.cn` / `toca.17u.cn`）使用 `mcp__tc-wiki__matrix-wiki-get`
-    - 用户的完整输入（包括链接和链接外的补充文本）都应作为需求来源
-    - 主代理必须先做**来源判定**：区分“正文存在 / 正文部分存在 / 只有元信息或引用无正文”
-    - 主代理必须先做**重复检测**：合并重复来源、折叠重复段落，并记录去重说明
-    - 如果没有链接但有可分析文本，也必须直接归一化，不得要求用户重新按某种格式提交
+   - 如需读取外部链接 / 第三方文档 / 本地文件正文，主代理直接调用相应 MCP / 工具
+   - wiki 链接（`wiki.17u.cn` / `toca.17u.cn`）使用 `mcp__hotel-tools__matrix-wiki-get`
+   - 用户的完整输入（包括链接和链接外的补充文本）都应作为需求来源
+   - 主代理必须先做**来源判定**：区分“正文存在 / 正文部分存在 / 只有元信息或引用无正文”
+   - 主代理必须先做**重复检测**：合并重复来源、折叠重复段落，并记录去重说明
+   - 如果没有链接但有可分析文本，也必须直接归一化，不得要求用户重新按某种格式提交
 5. 主代理生成的 requirement archive 必须包含：
-    - requirement 标题
-    - 需求文档可用性（`available | partial | missing`）
-    - 原始来源清单（URL / pasted text / local file / metadata-only）
-    - 获取方式（调用了哪些 MCP / 工具）
-    - 去重说明（如果有）
-    - 归一化后的 markdown 正文
-    - 仍然缺失或无法访问的内容
+   - requirement 标题
+   - 需求文档可用性（`available | partial | missing`）
+   - 原始来源清单（URL / pasted text / local file / metadata-only）
+   - 获取方式（调用了哪些 MCP / 工具）
+   - 去重说明（如果有）
+   - 归一化后的 markdown 正文
+   - 仍然缺失或无法访问的内容
 6. 主代理整理完成后立即把结果写入 `.sdd-slim/<feature-name>.requirement.md`
 7. 如果返回 `Requirement availability` 为 `partial` / `missing`，或 `Follow-up needed before planning` 非 `none`：
-    - 继续步骤 2，仅用于定位 / 创建 spec
-    - 此时 spec 只允许先写：header、`Clarification Log`、`Pending User Input`，以及可选的仅含 `Q*` 的 `Requirement Breakdown`
-    - 在需求正文可用前，不得生成 `P*`、`Research Findings` 或 `T*`
-    - 把每一项转成 `Q*`，写入 `Clarification Log` / `Pending User Input`
-    - 将 spec 状态标记为 `needs-user-input`
-    - 在当前轮立即通过 `askquestion` 发出第一个阻塞 `Q*`
-    - 发出问题后直接停止，不得进入需求拆分、代码探索或 `T*` 生成
+   - 继续步骤 2，仅用于定位 / 创建 spec
+   - 此时 spec 只允许先写：header、`Clarification Log`、`Pending User Input`，以及可选的仅含 `Q*` 的 `Requirement Breakdown`
+   - 在需求正文可用前，不得生成 `P*`、`Research Findings` 或 `T*`
+   - 把每一项转成 `Q*`，写入 `Clarification Log` / `Pending User Input`
+   - 将 spec 状态标记为 `needs-user-input`
+   - 在当前轮立即通过 `askquestion` 发出第一个阻塞 `Q*`
+   - 发出问题后直接停止，不得进入需求拆分、代码探索或 `T*` 生成
 8. 如果没有阻塞项，后续 planning 必须先读取这个 requirement archive，并以它作为 canonical requirement input
 
 #### 主 Agent requirement 归档约束
@@ -154,12 +154,12 @@ prompt 模板见 `prompts/requirement-archive-prompt.md`。
    - 改动范围合理（最小化且不破坏现有功能）
    - 任务拆分粒度适当
    - 验证方式可落地
-   - 如果 HOW 不正确或不充分，**重新调用 subagent**对该 P* 再次探索，附加上次探索的不足之处作为补充指令，直到 HOW 足够正确
+   - 如果 HOW 不正确或不充分，**重新调用 subagent**对该 P\* 再次探索，附加上次探索的不足之处作为补充指令，直到 HOW 足够正确
 4. HOW 确认正确后，把 subagent 结论回写到 spec 的 `Research Findings`（参考 `prompts/research-summary-output.md`）
 5. 如果子代理返回 `Questions requiring user input`：
-    - 把它们登记到 `Clarification Log` / `Pending User Input`
-    - 使用 `askquestion` 逐个询问（参考 `prompts/clarification-question.md`）
-    - 回答后必要时重新探索当前 `P*`（回到步骤 1）
+   - 把它们登记到 `Clarification Log` / `Pending User Input`
+   - 使用 `askquestion` 逐个询问（参考 `prompts/clarification-question.md`）
+   - 回答后必要时重新探索当前 `P*`（回到步骤 1）
 6. 无论当前 `P*` 是否复杂、是否仍有明显歧义，都必须使用 `askquestion` 对该 `P*` 做一次用户确认（参考 `prompts/point-confirmation-question.md`）
    - 提问内容应总结当前理解、代码依据、建议 HOW、候选任务与验证方式
    - 简单 `P*` 也必须确认，不能因为“已经很明确”而跳过
