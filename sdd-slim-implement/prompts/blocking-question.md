@@ -6,7 +6,7 @@ Use this when implementation is blocked by one missing decision.
 question: |
   当前实现被一个阻塞点卡住：
 
-  - 当前任务：<T1>
+  - 当前实现包：<P1 / T1-T3>
   - 阻塞原因：<what is ambiguous or missing>
   - 可选方向：<A / B if relevant>
   - 影响范围：<files / acceptance criteria / behavior>

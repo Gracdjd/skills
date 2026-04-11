@@ -17,10 +17,10 @@
 
 ## 2. Requirement Breakdown
 
-| ID | Type | Title | Current Understanding | Source | Status |
-| --- | --- | --- | --- | --- | --- |
-| P1 | requirement | ... | ... | ... | draft |
-| Q1 | clarification | ... | ... | ... | pending |
+| ID  | Type          | Title | Current Understanding | Source | Status  |
+| --- | ------------- | ----- | --------------------- | ------ | ------- |
+| P1  | requirement   | ...   | ...                   | ...    | draft   |
+| Q1  | clarification | ...   | ...                   | ...    | pending |
 
 > If `Requirement Availability` is not `available`, this section may temporarily contain only `Q*` rows.
 
@@ -83,6 +83,8 @@
 - [ ] ...
 
 ## 9. Task Checklist
+
+> Keep `T*` entries from the same `P*` contiguous so implement can dispatch one `P*` package to one subagent while the main agent reviews and writes back task status.
 
 - [ ] T1: <task title>
   - Source: P1

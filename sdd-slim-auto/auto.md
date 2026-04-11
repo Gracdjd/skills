@@ -86,9 +86,10 @@
 - 在进入实现前，仍必须执行 context-reset preflight
 - 如果当前环境没有真实的 `clear` / reset / new session / compact 能力，不得伪造；明确采用 fresh-context fallback，并重新读取 spec 与当前代码
 - 只实现已确认的 `T*`
-- 默认沿用 implement 的 subagent-first 模型：能被清晰边界化的单个 `T*` 实现、定向检索、定向验证，优先由主 agent 委派给 subagent
+- 默认沿用 implement 的 subagent-first 模型：以单个 `P*` 作为实现包，由主 agent 委派一个 subagent 处理该 `P*` 下关联的多个 `T*`
+- 如果检测到 `--mutiAgent` 或用户明确要求开启多个 agent / subagent 并行实现，implement 阶段可直接并行处理多个独立 `P*` 实现包，无需额外确认
 - auto 只负责阶段编排，不改变 implement 内部职责分工：主 agent 仍必须保留审核结果、回写 spec、判定 deviation/blocker、决定 `[x] / [~] / blocked` 的职责
-- 如果 subagent 返回结果不足以支撑当前 `T*` 完成判定，必须留在 implement 阶段，由主 agent 补充审核、补充验证或接手修正；不得因为 auto 链路而直接推进到 review
+- 如果 subagent 返回结果不足以支撑当前 `P*` 包内各个 `T*` 的完成判定，必须留在 implement 阶段，由主 agent 补充审核、补充验证或接手修正；不得因为 auto 链路而直接推进到 review
 - 如果 implement 因歧义、缺少输入或越界风险而阻塞，按原规则 `askquestion` 或写 blocker note，然后停止等待用户
 - 当 implement 达到 `implemented` 或 `implemented-with-issues` 时，不询问是否继续 review；直接进入阶段 3
 

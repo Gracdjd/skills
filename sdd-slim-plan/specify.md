@@ -260,6 +260,11 @@ prompt 模板见 `prompts/subagent-task-prompt.md`。
 - 验收标准
 - 验证方式
 
+额外组织要求：
+
+- 同一个 `P*` 生成的多个 `T*` 应在 `Task Checklist` 中保持连续，便于 implement 阶段把该 `P*` 作为单个 subagent 实现包处理
+- 不同 `P*` 的任务不要交错穿插，除非 spec 明确记录了必须交错执行的依赖原因
+
 如果某个 `P*` 还不够清晰：
 
 - 不要强行生成可执行任务
