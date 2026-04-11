@@ -16,7 +16,7 @@
 
 - 不修改 `sdd-slim-plan` / `sdd-slim-implement` / `sdd-slim-review` / `sdd-slim-fix` 的任何定义、模板、提问方式或停止条件
 - 不通过弱化 gate 来实现自动化；只改变下一阶段的触发方式
-- `sdd-slim-plan` 阶段的 `Q*` 提问、`P*` 确认、顺序 subagent 探索、`needs-user-input` 停止等待，必须完整保留
+- `sdd-slim-plan` 阶段的 `Q*` 提问、`P*` 确认、默认串行 subagent 探索，以及在检测到 `--mutiAgent` 或用户明确要求后先经 `askquestion` 确认再切换 multiAgent 并行探索的规则，必须完整保留
 - `sdd-slim-implement` 阶段的 context-reset preflight、只实现已确认 `T*`、subagent-first 执行模型、主 agent 审核与 spec 回写职责、阻塞时停止，必须完整保留
 - `sdd-slim-plan` 若缺失任一 `P*` 的 subagent 研究或用户确认，禁止自动进入 implement
 - `sdd-slim-plan` 若任何代码库 exploration 不是由 subagent 完成，也禁止自动进入 implement
@@ -72,6 +72,7 @@
 - 仍然由当前用户输入直接启动 planning，不得先让用户重新选择输入类型
 - 仍然必须按原规则生成 requirement archive 与 canonical spec
 - 仍然必须对每个 `Q*` 和每个 `P*` 用 `askquestion`
+- 如果检测到 `--mutiAgent` 或用户明确要求开启多个 subagent，仍然必须先发出单独的确认性 `askquestion`；只有用户明确同意后，plan 阶段才允许并行探索
 - 只要 plan 结果是 `needs-user-input`，必须立即发出当前应问的第一个问题，然后停止等待用户
 - 当 plan 结果达到 `ready` 时，不得再问“是否进入 implement”；直接进入阶段 2
 

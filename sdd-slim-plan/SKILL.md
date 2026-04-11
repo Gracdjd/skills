@@ -6,7 +6,7 @@ description: |
   主代理必须直接分析当前用户输入；如果消息里已有链接就直接抓取，如果没有链接但有需求文本就直接归档，不能先让用户再选择输入类型。
   requirement 归档阶段首先要判断当前输入里是否存在可用的需求文档正文，并去重重复来源 / 重复粘贴内容。
   对每个任务点的代码库探索与 HOW 生成，必须交给 subagent 完成；每个 `P*` 在代码研究完成后都必须通过 `askquestion` 向用户确认一次，即使是简单、看似明确的 `P*` 也不能跳过；若仍有额外阻塞项，再继续逐个 `askquestion` 关闭。
-  每个 `P*` 必须顺序处理（一个接一个），不得并发调用多个 subagent。
+  默认每个 `P*` 顺序处理（一个接一个）；只有当用户提供 `--mutiAgent` 参数或明确要求开启多个 subagent，并且在 `askquestion` 二次确认后，才允许进入 multiAgent 并行探索模式。
 user-invocable: true
 ---
 
@@ -21,11 +21,12 @@ user-invocable: true
 3. 使用 `templates/spec.md` 作为 canonical spec 模板
 4. 对单个 `Q*` 的澄清提问参考 `prompts/clarification-question.md`
 5. 对每个 `P*` 的用户确认提问参考 `prompts/point-confirmation-question.md`
-6. 对每个 `P*` 使用 `prompts/subagent-task-prompt.md` 驱动代码研究 subagent
-7. 输出待补充信息时参考 `prompts/pending-input-output.md`
-8. 输出任务研究摘要时参考 `prompts/research-summary-output.md`
-9. 示例见 `examples/example.spec.md`
-10. 所有 P*/Q* 处理完成后的整体连贯性分析参考 `prompts/coherence-check-prompt.md`
+6. multiAgent 开关确认提问参考 `prompts/multi-agent-confirmation-question.md`
+7. 对每个 `P*` 使用 `prompts/subagent-task-prompt.md` 驱动代码研究 subagent
+8. 输出待补充信息时参考 `prompts/pending-input-output.md`
+9. 输出任务研究摘要时参考 `prompts/research-summary-output.md`
+10. 示例见 `examples/example.spec.md`
+11. 所有 P*/Q* 处理完成后的整体连贯性分析参考 `prompts/coherence-check-prompt.md`
 
 ## 独立性规则
 
@@ -44,6 +45,9 @@ user-invocable: true
 - 每个 `P*` 的代码库研究**必须**由 subagent 完成；主代理不得自己直接用普通读文件/搜索结果替代这一步
 - plan 阶段所有与代码库有关的 `explore / research / HOW 生成 / 入口定位 / 可复用模式识别 / 风险定位 / 验证路径识别` 任务，都必须交给 subagent；不只限于 `P*`
 - 主代理在 plan 阶段只负责 requirement 归档、spec 写回、提问编排、以及对 subagent 返回结果做审查；不得亲自承担代码库探索工作
+- 默认使用单 subagent 串行探索；若检测到用户传入 `--mutiAgent` 或明确表示要开启多个 subagent，主代理必须先通过 `askquestion` 做一次单点确认；只有收到明确同意后，才能进入 multiAgent 并行探索模式
+- 如果用户没有明确确认 multiAgent，或回答否定 / 含糊，则继续保持串行 subagent 模式
+- multiAgent 模式只放开“代码库探索 / 问题研究”的并行度；spec 写回、`P*` 用户确认、`Q*` 澄清、最终任务化与 ready 判定仍必须由主代理串行收口
 - 如果某个 `P*` 还没有对应的 subagent 研究结果，就不得写入该 `P*` 的 `Research Findings`、不得生成该 `P*` 的 `T*`、不得声称 planning 完成
 - 每个 `P*` 必须保留可审计的 subagent 产物痕迹：至少要能在 spec 中看到与该 `P*` 对应的代码依据、HOW、风险和验证建议
 - 如果主代理在 planning 中发现自己已经绕过了 subagent 或跳过了 `P*` 确认，必须立即停止后续 planning，补做缺失步骤，而不是继续推进到下一个 `P*`
@@ -52,10 +56,19 @@ user-invocable: true
 - 不触发 `sdd-slim-fix`
 - 其他 skill 只能由用户手动调用
 
-## 顺序处理规则（CRITICAL）
+## Subagent 调度规则（CRITICAL）
 
-- 每个 `P*` 必须**逐个顺序处理**，严禁并发调用多个 subagent
-- 处理顺序：`subagent 探索 P*` → `确认 HOW 正确性` → `写入 spec` → `askquestion 确认当前 P*` → `如仍有额外阻塞再 askquestion` → `处理下一个 P*`
+- 默认模式是串行：每个 `P*` 必须逐个顺序处理
+- 只有在满足以下全部条件时，才允许切换到 multiAgent 并行探索模式：
+  - 用户消息中显式包含 `--mutiAgent`，或明确要求开启多个 subagent / 多个 agent 并行探索
+  - 主代理已经通过 `askquestion` 单独询问“是否确认开启多个 agent 并行完成 plan 阶段探索”
+  - 用户给出明确肯定答复
+- 如果缺少上述任一条件，就必须保持串行模式；不得因为用户“可能想快一点”而自行并发
+- multiAgent 模式下，只允许并行执行彼此独立的代码库探索或问题研究；不得并行执行 spec 写回、`P*` 用户确认、`Q*` 澄清、最终 coherence 判定
+- 即使在 multiAgent 模式下，每个 subagent 也只负责一个 `P*` 或一个明确的问题研究包；主代理负责归并结果、去重冲突、判断 HOW 是否成立
+- 处理顺序：
+  - 串行模式：`subagent 探索 P*` → `确认 HOW 正确性` → `写入 spec` → `askquestion 确认当前 P*` → `如仍有额外阻塞再 askquestion` → `处理下一个 P*`
+  - multiAgent 模式：`主代理划分独立探索包` → `多个 subagent 并行探索` → `主代理统一审核与去重` → `按 P* 顺序写入 spec` → `按 P* 顺序 askquestion 确认` → `任务化`
 - subagent 负责探索代码库并给出 grounded 的 HOW 建议；主代理在 subagent 返回后，先判断 HOW 是否正确，再决定是否写入 spec
 - 如果 HOW 不正确或不充分，主代理必须重新调用 subagent 对该 P* 再次探索，直到 HOW 足够正确
 - 在所有 `P*` 和 `Q*` 都处理完成后，必须执行一次**整体连贯性分析**，检查所有任务是否能串起来、是否有漏洞

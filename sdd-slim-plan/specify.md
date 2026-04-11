@@ -37,7 +37,8 @@
 - 主代理不得用自己直接搜索/读取代码得到的结论，替代 `P*` 所要求的 subagent 研究步骤；主代理直接搜索只能用于 requirement 归档或补充校验，不能替代 `P*` 研究闭环
 - 不仅 `P*`，plan 阶段任何代码库探索任务都必须通过 subagent 执行，包括但不限于：入口定位、调用链核实、现有模式对齐、依赖确认、风险定位、验证路径识别、coherence gap 复核
 - 主代理在 plan 阶段不得因为“只是补充看一眼代码”“只是确认一个文件”而直接自己做 repo exploration；只要目的属于代码库探索，就必须走 subagent
-- **每个 `P*` 必须逐个顺序处理，严禁并发调用多个 subagent**
+- 默认每个 `P*` 逐个顺序处理；只有在检测到 `--mutiAgent` 或用户明确要求开启多个 subagent，并通过 `askquestion` 获得明确同意后，才允许切换到 multiAgent 并行探索模式
+- multiAgent 模式只允许并行执行独立的 repo exploration / research；spec 写回、`P*` 用户确认、`Q*` 澄清、任务生成、ready 判定仍由主代理串行完成
 - **subagent 返回后，主代理必须先确认 HOW 正确性，再写入 spec；HOW 不正确则重新调用 subagent**
 - 如果 subagent 返回新的未决问题，必须把它们转成 `Q*` 并继续用 `askquestion` 逐个关闭
 - 如果 requirement 归档阶段或 subagent 已经暴露阻塞性问题，主代理必须在写完 spec 后立即发出下一个 `askquestion`，不得长时间延后提问
@@ -140,7 +141,28 @@ prompt 模板见 `prompts/requirement-archive-prompt.md`。
 
 ### 步骤 5：对每个 `P*` 执行”探索 → 确认 HOW → 写入 → 用户确认 → 任务化”
 
-对每个需求点 `P*`，**逐个顺序**执行以下闭环（严禁并发调用多个 subagent）：
+对每个需求点 `P*`，默认逐个顺序执行以下闭环；如果已按规则进入 multiAgent 模式，则只放开“探索”这一步的并行度，后续仍串行收口：
+
+#### multiAgent 模式开关（CRITICAL）
+
+在进入任何并行探索前，主代理必须先检查是否出现以下任一触发信号：
+
+- 用户消息显式包含 `--mutiAgent`
+- 用户明确要求“开启多个 subagent / 多个 agent 并行探索 / 并行研究代码库”
+
+如果命中触发信号：
+
+1. 主代理必须立即通过 `askquestion` 单独询问是否确认开启多个 agent 并行完成 plan 阶段探索（参考 `prompts/multi-agent-confirmation-question.md`）
+2. 只有收到明确肯定答复，才能开启 multiAgent 模式
+3. 如果用户拒绝、保持沉默、回答模糊，或当前问题不是明确肯定，继续使用默认串行模式
+
+建议提问要点：
+
+- 说明将对多个独立需求点或研究问题并行调用 subagent 以缩短 planning 时间
+- 说明并行只用于探索，不改变主代理审核、spec 写回、用户确认的串行收口规则
+- 说明可能增加 token / 资源消耗
+
+串行模式下，对每个需求点 `P*` 逐个执行以下闭环：
 
 1. 调用 **subagent** 搜索代码库（参考 `prompts/subagent-task-prompt.md`）
 2. subagent 必须返回：
@@ -171,6 +193,14 @@ prompt 模板见 `prompts/requirement-archive-prompt.md`。
 8. 当当前 `P*` 的研究结果已足够清晰、HOW 已确认正确，且该 `P*` 的用户确认已完成后，才允许把当前 `P*` 写成一个或多个 `T*`
 9. **只有当前 `P*` 完全处理完毕后，才进入下一个 `P*`**
 
+multiAgent 模式下的补充规则：
+
+1. 主代理先把多个彼此独立的 `P*` 或研究问题切成独立探索包
+2. 每个 subagent 一次只处理一个探索包，不得跨多个未归并的 `P*`
+3. 多个 subagent 可以并行返回研究摘要，但主代理必须先统一审查、去重和消解冲突，再按 `P*` 顺序写入 spec
+4. `askquestion` 仍然一次只问一个 `P*` 或一个 `Q*`
+5. 若并行探索结果互相冲突、依赖关系不清或出现新的共享阻塞，必须暂停并行收口，必要时转成新的 `Q*` 或重新探索
+
 ### 阶段自检（CRITICAL）
 
 在把 spec 标记为 `ready` 之前，主代理必须逐项自检以下事实；任一项不满足都不得收尾为 ready：
@@ -193,12 +223,19 @@ prompt 模板见 `prompts/requirement-archive-prompt.md`。
 - 必须重新用 subagent 补做对应探索
 - 补做完成前，不得生成或保留依赖该探索结果的 `T*`
 
+如果自检发现主代理在未获得用户明确确认的情况下开启了 multiAgent：
+
+- 该并行探索结果不得直接作为 ready 依据
+- 主代理必须补发确认问题；若用户不确认，则回退到串行模式重新完成必要探索
+- 在确认状态被纠正前，不得把 spec 标为 `ready`
+
 #### subagent 约束
 
 - 只返回结构化摘要，不要贴原始搜索输出
 - HOW 必须基于现有代码模式
 - 不允许凭空设计与项目风格冲突的新架构
 - 如果信息不足，不要硬编任务，必须明确写出 `Questions requiring user input`
+- 即使在 multiAgent 模式下，每个 subagent 仍只负责一个 `P*` 或一个明确的问题研究包
 
 prompt 模板见 `prompts/subagent-task-prompt.md`。  
 `Q*` 提问模板见 `prompts/clarification-question.md`。  
