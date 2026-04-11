@@ -2,6 +2,7 @@
 
 > 输入：需求文档链接 / 需求正文 / bug 描述 / 重构诉求 / 已存在的 `.sdd-slim/*.spec.md`
 > 输出：以下二者之一
+>
 > 1. 当前阶段的第一个阻塞问题
 > 2. 已完成的 `plan => implement => review => fix` 结果
 
@@ -16,10 +17,11 @@
 - 不修改 `sdd-slim-plan` / `sdd-slim-implement` / `sdd-slim-review` / `sdd-slim-fix` 的任何定义、模板、提问方式或停止条件
 - 不通过弱化 gate 来实现自动化；只改变下一阶段的触发方式
 - `sdd-slim-plan` 阶段的 `Q*` 提问、`P*` 确认、顺序 subagent 探索、`needs-user-input` 停止等待，必须完整保留
-- `sdd-slim-implement` 阶段的 context-reset preflight、只实现已确认 `T*`、阻塞时停止，必须完整保留
+- `sdd-slim-implement` 阶段的 context-reset preflight、只实现已确认 `T*`、subagent-first 执行模型、主 agent 审核与 spec 回写职责、阻塞时停止，必须完整保留
 - `sdd-slim-plan` 若缺失任一 `P*` 的 subagent 研究或用户确认，禁止自动进入 implement
 - `sdd-slim-plan` 若任何代码库 exploration 不是由 subagent 完成，也禁止自动进入 implement
 - `sdd-slim-implement` 若未按规则持续回写 spec、或发现实现偏离 spec 但未先记录 deviation/blocker，禁止自动进入 review
+- `sdd-slim-implement` 若把当前 `T*` 的完成判定、deviation/blocker 判定或 spec 状态同步外包给 subagent，也禁止自动进入 review
 - `sdd-slim-review` 阶段只做 review，不修改产品代码
 - `sdd-slim-fix` 阶段只修 review 暴露的 actionable findings，不做广泛 review
 - 自动化的含义是：当当前阶段已经合法完成且没有用户阻塞时，直接进入下一阶段；不是跳过规则
@@ -83,6 +85,9 @@
 - 在进入实现前，仍必须执行 context-reset preflight
 - 如果当前环境没有真实的 `clear` / reset / new session / compact 能力，不得伪造；明确采用 fresh-context fallback，并重新读取 spec 与当前代码
 - 只实现已确认的 `T*`
+- 默认沿用 implement 的 subagent-first 模型：能被清晰边界化的单个 `T*` 实现、定向检索、定向验证，优先由主 agent 委派给 subagent
+- auto 只负责阶段编排，不改变 implement 内部职责分工：主 agent 仍必须保留审核结果、回写 spec、判定 deviation/blocker、决定 `[x] / [~] / blocked` 的职责
+- 如果 subagent 返回结果不足以支撑当前 `T*` 完成判定，必须留在 implement 阶段，由主 agent 补充审核、补充验证或接手修正；不得因为 auto 链路而直接推进到 review
 - 如果 implement 因歧义、缺少输入或越界风险而阻塞，按原规则 `askquestion` 或写 blocker note，然后停止等待用户
 - 当 implement 达到 `implemented` 或 `implemented-with-issues` 时，不询问是否继续 review；直接进入阶段 3
 

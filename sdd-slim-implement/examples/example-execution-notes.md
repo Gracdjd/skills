@@ -2,12 +2,14 @@
 
 ```md
 - 2026-04-06 T1 [x]
+  - Executor: `subagent`
   - Files: `src/pages/checkout/index.tsx`
   - Validation: `pnpm test checkout-submit`
   - Deviation: none
   - Note: added `isSubmitting` state lifecycle
 
 - 2026-04-06 T2 [x]
+  - Executor: `main-agent`
   - Files: `src/components/SubmitButton.tsx`
   - Validation: manual checkout page regression
   - Deviation: none

@@ -28,6 +28,9 @@
 - 如果存在多个候选 `*.spec.md` 且用户未指定，使用 `askquestion` 让用户选择
 - 如果 spec 状态不是 `ready` / `in-progress`，直接记录 blocker 并停止
 - 只执行已确认的 `T*`；禁止静默扩 scope
+- 默认采用 subagent-first：能被清晰边界化的单个 `T*` 实现、定向检索、定向验证，优先交给 subagent；主 agent 负责最终审核与状态裁定
+- 主 agent 必须保留以下职责，不能外包：spec 事实来源确认、任务顺序推进、checklist/execution notes 回写、deviation/blocker 判定、最终完成判定
+- subagent 一次只处理一个当前 `T*` 或一个紧密耦合的小改动包；若需要跨多个 `T*` 协调，必须拆回主 agent 编排
 - 实现过程中，spec 必须持续保持与当前真实进度同步；代码进度不得领先于 spec 回写超过一个正在执行的 `T*`
 - 每完成一个 `T*` 后，必须先回写 spec，再开始下一个 `T*`
 - 如果发现当前实现依赖 spec 未写明的假设、需要新增任务、或需要改动未列入 `T*` 的行为边界，必须先停下：要么 `askquestion`，要么记录 blocker/deviation，禁止继续偷跑实现
@@ -76,15 +79,24 @@
 1. 把状态改为 `in-progress`
 2. 从 `Task Checklist` 读取所有 `[ ]` 任务
 3. 严格按顺序执行
-4. 每完成一个任务就更新同一文件：
+4. 对当前 `T*` 先判断是否适合委派给 subagent：
+   - 适合：由主 agent 明确任务边界、相关文件、禁止扩 scope 的约束、期望验证，然后调用 subagent 执行
+   - 不适合：由主 agent 直接实现，但仍遵守同样的边界与验证要求
+5. subagent 返回后，主 agent 必须先审核以下内容，再决定是否接受该轮实现：
+   - 改动是否只覆盖当前 `T*`
+   - 是否引入 spec 外行为或隐含假设
+   - 验证是否真实且足以支撑当前完成判定
+   - 是否还存在需要记录的 deviation / risk / blocker
+6. 每完成一个任务就更新同一文件：
    - `[ ]` → `[x]`：已完成且验证通过
    - `[ ]` → `[~]`：已做最小可接受实现，但仍有已知问题
-5. 在 `Execution Notes` 中记录：
-    - 任务 ID
-    - 修改文件
-    - 实际验证
-    - 与原计划的偏差（如有）
-6. 在开始下一个 `T*` 前，主代理必须重新读取刚写回的 spec，确认 checklist / execution notes 已落盘且与当前代码状态一致
+7. 在 `Execution Notes` 中记录：
+   - 任务 ID
+   - 修改文件
+   - 实际验证
+   - 与原计划的偏差（如有）
+   - 执行主体：`subagent` / `main-agent`
+8. 在开始下一个 `T*` 前，主代理必须重新读取刚写回的 spec，确认 checklist / execution notes 已落盘且与当前代码状态一致
 
 ### 步骤 4：阻塞处理
 
@@ -101,6 +113,12 @@
 - 如果当前轮仍无法继续，再用 `templates/blocker-note.md` 的格式把 blocker 写入 `Execution Notes`
 - 把 spec 状态更新为 `blocked`（如确有阻塞）
 - 直接停止，等待用户手动再次调用
+
+subagent 相关补充：
+
+- 如果 subagent 的结果无法证明其实现满足当前 `T*`，主 agent 不得直接接受，必须补做审核、追加验证，或改为主 agent 接手修正
+- 如果 subagent 已经做出 spec 外改动，主 agent 必须先记录 deviation，再决定回退、修正或向用户澄清
+- 如果 subagent 返回的信息不足以支持 checklist 更新，则该 `T*` 维持未完成
 
 额外规则：
 
@@ -123,6 +141,7 @@
 - `T*` 只有在验证结果已写入 `Execution Notes` 后，才能标成 `[x]`
 - 如果代码已改但验证失败/缺失，只能标 `[~]` 或保持未完成，并在 notes 中说明原因
 - 如果当前环境无法执行预定验证，必须把“无法验证的原因”和“未验证风险”写入 `Execution Notes`
+- 若验证由 subagent 执行，主 agent 仍需判断验证是否与当前 `T*` 直接对应、是否存在遗漏；必要时补跑一轮主 agent 自己的定向验证
 
 ### 步骤 6：收尾
 
