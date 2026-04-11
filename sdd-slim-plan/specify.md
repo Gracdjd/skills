@@ -34,6 +34,9 @@
 - 每个 `P*` 在完成代码研究并写入研究结论后，都必须通过 `askquestion` 向用户确认一次；即使当前输入、requirement archive 与代码研究已经足够明确，也不得跳过这次确认
 - 每个 `P*` 在写入 `Task Checklist` 前，必须先调用 **subagent** 做代码库探索
 - subagent 必须负责给出 grounded 的 HOW 建议
+- 主代理不得用自己直接搜索/读取代码得到的结论，替代 `P*` 所要求的 subagent 研究步骤；主代理直接搜索只能用于 requirement 归档或补充校验，不能替代 `P*` 研究闭环
+- 不仅 `P*`，plan 阶段任何代码库探索任务都必须通过 subagent 执行，包括但不限于：入口定位、调用链核实、现有模式对齐、依赖确认、风险定位、验证路径识别、coherence gap 复核
+- 主代理在 plan 阶段不得因为“只是补充看一眼代码”“只是确认一个文件”而直接自己做 repo exploration；只要目的属于代码库探索，就必须走 subagent
 - **每个 `P*` 必须逐个顺序处理，严禁并发调用多个 subagent**
 - **subagent 返回后，主代理必须先确认 HOW 正确性，再写入 spec；HOW 不正确则重新调用 subagent**
 - 如果 subagent 返回新的未决问题，必须把它们转成 `Q*` 并继续用 `askquestion` 逐个关闭
@@ -167,6 +170,28 @@ prompt 模板见 `prompts/requirement-archive-prompt.md`。
 7. 用户回答后立即回写 spec；如果用户修正了行为、边界或 HOW，必要时重新探索当前 `P*`（回到步骤 1）
 8. 当当前 `P*` 的研究结果已足够清晰、HOW 已确认正确，且该 `P*` 的用户确认已完成后，才允许把当前 `P*` 写成一个或多个 `T*`
 9. **只有当前 `P*` 完全处理完毕后，才进入下一个 `P*`**
+
+### 阶段自检（CRITICAL）
+
+在把 spec 标记为 `ready` 之前，主代理必须逐项自检以下事实；任一项不满足都不得收尾为 ready：
+
+1. 每个 `P*` 都有 subagent 研究结果
+2. 每个 `P*` 都已经通过一次 `askquestion` 获得用户确认
+3. 每个 `P*` 的 HOW 都经过主代理审查并写入 spec
+4. 没有任何 `T*` 是在缺失上述任一条件时生成的
+5. 所有 `Q*` 都已关闭，或 spec 状态明确为 `needs-user-input`
+
+如果自检发现 planning 过程中遗漏了 subagent / 用户确认 / coherence check：
+
+- 不得继续假装完成
+- 必须回到缺失步骤补做
+- 必须在 spec 中修正对应 section，而不是只在对话里口头说明
+
+如果自检发现某个 exploration 动作是主代理自己做的，而不是 subagent 做的：
+
+- 该探索结果不得作为 ready 依据
+- 必须重新用 subagent 补做对应探索
+- 补做完成前，不得生成或保留依赖该探索结果的 `T*`
 
 #### subagent 约束
 

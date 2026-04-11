@@ -41,6 +41,12 @@ user-invocable: true
 - requirement 归档由主代理直接执行；如需抓取链接或本地文档正文，由主代理直接调用对应 MCP / 工具
 - 每个 `P*` 在代码研究完成后都必须通过 `askquestion` 做一次用户确认，不得因需求简单或看似明确而跳过
 - 额外的 `Q*` 也必须通过 `askquestion` 一次只问一个问题
+- 每个 `P*` 的代码库研究**必须**由 subagent 完成；主代理不得自己直接用普通读文件/搜索结果替代这一步
+- plan 阶段所有与代码库有关的 `explore / research / HOW 生成 / 入口定位 / 可复用模式识别 / 风险定位 / 验证路径识别` 任务，都必须交给 subagent；不只限于 `P*`
+- 主代理在 plan 阶段只负责 requirement 归档、spec 写回、提问编排、以及对 subagent 返回结果做审查；不得亲自承担代码库探索工作
+- 如果某个 `P*` 还没有对应的 subagent 研究结果，就不得写入该 `P*` 的 `Research Findings`、不得生成该 `P*` 的 `T*`、不得声称 planning 完成
+- 每个 `P*` 必须保留可审计的 subagent 产物痕迹：至少要能在 spec 中看到与该 `P*` 对应的代码依据、HOW、风险和验证建议
+- 如果主代理在 planning 中发现自己已经绕过了 subagent 或跳过了 `P*` 确认，必须立即停止后续 planning，补做缺失步骤，而不是继续推进到下一个 `P*`
 - 完成后不主动询问是否进入 `sdd-slim-implement`
 - 不触发 `sdd-slim-review`
 - 不触发 `sdd-slim-fix`
@@ -54,3 +60,5 @@ user-invocable: true
 - 如果 HOW 不正确或不充分，主代理必须重新调用 subagent 对该 P* 再次探索，直到 HOW 足够正确
 - 在所有 `P*` 和 `Q*` 都处理完成后，必须执行一次**整体连贯性分析**，检查所有任务是否能串起来、是否有漏洞
 - 如果连贯性分析发现漏洞，必须通过 `askquestion` 向用户确认补充方案
+- 如果任一 `P*` 缺少 subagent 研究、缺少用户确认、或 HOW 仍未经主代理审查确认，就禁止把 spec 状态标为 `ready`
+- 如果 plan 过程中出现任何新的探索需求（例如为回答 `Q*`、修正 HOW、补做 coherence gap、核实依赖链），也必须重新调用 subagent，而不是由主代理直接下场搜索代码

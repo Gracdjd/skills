@@ -17,6 +17,9 @@
 - 不通过弱化 gate 来实现自动化；只改变下一阶段的触发方式
 - `sdd-slim-plan` 阶段的 `Q*` 提问、`P*` 确认、顺序 subagent 探索、`needs-user-input` 停止等待，必须完整保留
 - `sdd-slim-implement` 阶段的 context-reset preflight、只实现已确认 `T*`、阻塞时停止，必须完整保留
+- `sdd-slim-plan` 若缺失任一 `P*` 的 subagent 研究或用户确认，禁止自动进入 implement
+- `sdd-slim-plan` 若任何代码库 exploration 不是由 subagent 完成，也禁止自动进入 implement
+- `sdd-slim-implement` 若未按规则持续回写 spec、或发现实现偏离 spec 但未先记录 deviation/blocker，禁止自动进入 review
 - `sdd-slim-review` 阶段只做 review，不修改产品代码
 - `sdd-slim-fix` 阶段只修 review 暴露的 actionable findings，不做广泛 review
 - 自动化的含义是：当当前阶段已经合法完成且没有用户阻塞时，直接进入下一阶段；不是跳过规则

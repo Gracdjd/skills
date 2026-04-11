@@ -30,6 +30,11 @@ user-invocable: true
 - 如果环境支持新建 session，应优先以新 session 进入 implement
 - 如果只能 compact / compress，必须明确说明这只是上下文压缩，不等价于真正 clear
 - 如有必要，可以用 `askquestion` 做阻塞澄清
+- 实现必须把 spec 当作唯一执行边界：只实现已确认 `T*`，不得因为“顺手修一下”“先跑通主链路”而扩 scope
+- 每完成一个 `T*`，都必须立即回写同一 spec 文件中的 `Task Checklist` 与 `Execution Notes`；不得拖到全部代码写完后再统一补记
+- 一旦发现实现已经偏离 spec、跳过回写、或在不确定的情况下继续编码，必须立即停止，先回写 deviation/blocker，再决定是否继续
+- 如果某项工作尚未写回 spec，就不得宣称该 `T*` 已完成
+- 如果验证尚未完成，就不得把该 `T*` 标为 `[x]`
 - 不自动触发 `sdd-slim-review`
 - 不自动触发 `sdd-slim-fix`
 - 不自动进入任何其他 skill
