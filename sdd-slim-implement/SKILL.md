@@ -1,3 +1,4 @@
+---
 name: sdd-slim-implement
 description: |
   Use when: 已有用户确认过的 canonical `*.spec.md`，现在要严格按文档实现。
