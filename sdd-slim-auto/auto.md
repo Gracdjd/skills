@@ -17,10 +17,11 @@
 - 不修改 `sdd-slim-plan` / `sdd-slim-implement` / `sdd-slim-review` / `sdd-slim-fix` 的任何定义、模板、提问方式或停止条件
 - 不通过弱化 gate 来实现自动化；只改变下一阶段的触发方式
 - `sdd-slim-plan` 阶段的 `Q*` 提问、`P*` 确认、默认串行 subagent 探索，以及在检测到 `--mutiAgent` 或用户明确要求后先经 `askquestion` 确认再切换 multiAgent 并行探索的规则，必须完整保留
-- `sdd-slim-implement` 阶段的 context-reset preflight、只实现已确认 `T*`、subagent-first 执行模型、主 agent 审核与 spec 回写职责、阻塞时停止，必须完整保留
+- `sdd-slim-implement` 阶段的 context-reset preflight、只实现已确认 `T*`、subagent-per-P 执行模型、主 agent 审核与 spec 回写职责、剩余 `P*` 重算与阻塞时停止，必须完整保留
 - `sdd-slim-plan` 若缺失任一 `P*` 的 subagent 研究或用户确认，禁止自动进入 implement
 - `sdd-slim-plan` 若任何代码库 exploration 不是由 subagent 完成，也禁止自动进入 implement
 - `sdd-slim-implement` 若未按规则持续回写 spec、或发现实现偏离 spec 但未先记录 deviation/blocker，禁止自动进入 review
+- `sdd-slim-implement` 若还有任一未完成 `P*` 未经 subagent 派发并完成合法收口，禁止自动进入 review
 - `sdd-slim-implement` 若把当前 `T*` 的完成判定、deviation/blocker 判定或 spec 状态同步外包给 subagent，也禁止自动进入 review
 - `sdd-slim-review` 阶段只做 review，不修改产品代码
 - `sdd-slim-fix` 阶段只修 review 暴露的 actionable findings，不做广泛 review
@@ -86,12 +87,12 @@
 - 在进入实现前，仍必须执行 context-reset preflight
 - 如果当前环境没有真实的 `clear` / reset / new session / compact 能力，不得伪造；明确采用 fresh-context fallback，并重新读取 spec 与当前代码
 - 只实现已确认的 `T*`
-- 默认沿用 implement 的 subagent-first 模型：以单个 `P*` 作为实现包，由主 agent 委派一个 subagent 处理该 `P*` 下关联的多个 `T*`
+- 默认沿用 implement 的 subagent-per-P 模型：以单个 `P*` 作为实现包，由主 agent 委派一个 subagent 处理该 `P*` 下关联的多个 `T*`
 - 如果检测到 `--mutiAgent` 或用户明确要求开启多个 agent / subagent 并行实现，implement 阶段可直接并行处理多个独立 `P*` 实现包，无需额外确认
-- auto 只负责阶段编排，不改变 implement 内部职责分工：主 agent 仍必须保留审核结果、回写 spec、判定 deviation/blocker、决定 `[x] / [~] / blocked` 的职责
-- 如果 subagent 返回结果不足以支撑当前 `P*` 包内各个 `T*` 的完成判定，必须留在 implement 阶段，由主 agent 补充审核、补充验证或接手修正；不得因为 auto 链路而直接推进到 review
+- auto 只负责阶段编排，不改变 implement 内部职责分工：主 agent 仍必须保留审核结果、回写 spec、判定 deviation/blocker、重算剩余 `P*`、决定 `[x] / [~] / blocked` 的职责
+- 如果 subagent 返回结果不足以支撑当前 `P*` 包内各个 `T*` 的完成判定，必须留在 implement 阶段，由主 agent 重新派发同一 `P*`、缩小边界后再派发，或记录 blocker；不得因为 auto 链路而直接推进到 review，也不得改由主 agent 直接实现该 `P*`
 - 如果 implement 因歧义、缺少输入或越界风险而阻塞，按原规则 `askquestion` 或写 blocker note，然后停止等待用户
-- 当 implement 达到 `implemented` 或 `implemented-with-issues` 时，不询问是否继续 review；直接进入阶段 3
+- 只有在全部剩余未完成 `P*` 已被处理到终态后，implement 才能达到 `implemented` 或 `implemented-with-issues`；此时不询问是否继续 review，直接进入阶段 3
 
 ## 阶段 3：Review
 

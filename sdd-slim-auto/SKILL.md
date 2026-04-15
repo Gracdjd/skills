@@ -31,7 +31,7 @@ user-invocable: true
 - 不直接“自动调用”其他四个 skill；而是在当前 skill 内按对应文档顺序执行同等阶段
 - 用户显式触发 `sdd-slim-auto`，即表示已授权在当前需求闭环中继续执行 implement / review / fix，无需再单独手动触发其他 skill
 - `sdd-slim-plan` 的 `Q*` 提问、`P*` 用户确认、默认串行 subagent 探索，以及在检测到 `--mutiAgent` 或用户明确要求后先经 `askquestion` 确认再切换为 multiAgent 并行探索的规则，必须原样保留
-- `sdd-slim-implement` 阶段中新增的 subagent-first 执行模型必须原样保留：单个 `T*` 的实现与定向验证优先交给 subagent，主 agent 负责审核、spec 回写与 stop condition
+- `sdd-slim-implement` 阶段中新增的 subagent-per-P 执行模型必须原样保留：每个未完成 `P*` 的实现与定向验证都先交给 subagent，主 agent 负责审核、spec 回写、剩余 `P*` 重算与 stop condition
 - 任一阶段只要按原规则需要 `askquestion`，就必须提问并停止等待用户回答
 - 当前阶段合法完成且无用户阻塞后，才自动进入下一阶段
 - 不为了自动化而弱化任何阶段的 hard gate、scope discipline 或 stop condition
