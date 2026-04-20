@@ -6,7 +6,7 @@ Use this for every `P*` after codebase research has been completed, including si
 question: |
   P1: <title>
 
-  基于需求和代码库探索，我当前准备写入 spec 的内容是：
+  基于需求和代码库探索，我当前准备写入 planning artifacts 的内容是：
   - 当前理解：<current understanding>
   - 代码依据：<entry files / reusable patterns>
   - 建议 HOW：<proposed execution approach>
@@ -21,4 +21,4 @@ Rules:
 - 每个 `P*` 都要使用一次，简单 `P*` 也不能跳过
 - 一次只确认一个 `P*`
 - 如果当前 `P*` 还带有额外阻塞项，问题可以聚焦该阻塞点，但仍需覆盖当前理解与建议 HOW
-- 如果用户修正了行为、边界或 HOW，需要回写 spec，必要时重新调用 subagent
+- 如果用户修正了行为、边界或 HOW，需要回写 `plan.md` / `spec.md` / `worklog.md` 中受影响的部分，必要时重新调用 subagent

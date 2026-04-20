@@ -10,14 +10,18 @@ Use this template as the main-agent checklist when `sdd-slim-plan` first acquire
 ## 当前任务
 
 - Feature name: <feature-name>
-- Requirement archive path: `.sdd-slim/<feature-name>.requirement.md`
-- Related spec path: `.sdd-slim/<feature-name>.spec.md`
+- Feature folder: `.sdd-slim/<YYYY.MM.DD>.<feature-name>/`
+- Requirement archive path: `.sdd-slim/<YYYY.MM.DD>.<feature-name>/requirement.md`
+- Related spec path: `.sdd-slim/<YYYY.MM.DD>.<feature-name>/spec.md`
+- Related plan path: `.sdd-slim/<YYYY.MM.DD>.<feature-name>/plan.md`
+- Related worklog path: `.sdd-slim/<YYYY.MM.DD>.<feature-name>/worklog.md`
+- Project test path: `.sdd-slim/_project/test.md`
 - Inferred source type from current user input: <url | pasted-text | local-file | mixed | metadata-only>
 - Raw sources from current user input: <原始链接 / 原始文本摘要 / 文件路径>
 
 ## 你的任务
 
-1. 先判断当前输入里是否存在**可用的需求文档正文**，输出 `Requirement availability: available | partial | missing`
+1. 先判断当前输入里是否存在可用的需求文档正文，输出 `Requirement availability: available | partial | missing`
    - `available`：能拿到足够支撑 planning 的需求正文
    - `partial`：拿到部分正文，但仍缺关键内容
    - `missing`：只有元信息、无效引用、无法访问链接，或没有任何需求正文
@@ -26,9 +30,9 @@ Use this template as the main-agent checklist when `sdd-slim-plan` first acquire
    - 完全重复或明显重复：直接折叠，并在 `Dedup notes` 说明
    - 高度相似但存在实质差异：不要静默合并；在 `Missing / inaccessible content` 或 `Follow-up needed before planning` 中明确冲突，并保留冲突信息
 4. 如果是链接，按来源类型选择相应 MCP / 工具抓取正文，而不是只返回链接摘要
-   - **wiki 链接**：如果链接域名包含 `wiki.17u.cn` 或 `toca.17u.cn`，必须调用 `mcp__hotel-tools__matrix-wiki-get`（设置 `readSubLink: true`、`readimg: true`）读取正文
+   - wiki 链接：如果链接域名包含 `wiki.17u.cn` 或 `toca.17u.cn`，必须调用 `mcp__hotel-tools__matrix-wiki-get`（设置 `readSubLink: true`、`readimg: true`）读取正文
 5. 如果是纯文本或本地文档，忠实整理成结构化 markdown
-6. 如果输入中既有链接又有补充文本，链接内容抓取后与补充文本**合并去重**为一份完整的需求文档，不要丢弃任何有效部分
+6. 如果输入中既有链接又有补充文本，链接内容抓取后与补充文本合并去重为一份完整的需求文档，不要丢弃任何有效部分
 7. 如果没有可用正文，也必须输出一个可落盘的 requirement archive：保留已知元信息、明确缺口，并把阻塞项写进 `Follow-up needed before planning`
 8. 尽量保留原始标题层级、列表、表格、验收条件、限制与开放问题
 9. 明确标注任何抓取失败、权限限制、缺失附件或上下文不全
@@ -49,7 +53,10 @@ Use this template as the main-agent checklist when `sdd-slim-plan` first acquire
 > Source Type: <url | pasted-text | local-file | mixed | metadata-only>
 > Original Source: <url / pasted by user / local path / metadata from user message>
 > Acquisition Method: <使用了哪些 MCP / 工具；若无则写 direct input normalization>
-> Related Spec: `.sdd-slim/<feature-name>.spec.md`
+> Feature Folder: `.sdd-slim/<YYYY.MM.DD>.<feature-name>/`
+> Related Spec: `.sdd-slim/<YYYY.MM.DD>.<feature-name>/spec.md`
+> Related Plan: `.sdd-slim/<YYYY.MM.DD>.<feature-name>/plan.md`
+> Related Worklog: `.sdd-slim/<YYYY.MM.DD>.<feature-name>/worklog.md`
 
 ## Acquisition Notes
 
@@ -76,4 +83,4 @@ Use this template as the main-agent checklist when `sdd-slim-plan` first acquire
 - 如果用户贴了多份重复内容，输出时必须折叠为单份 canonical 内容，并在 `Dedup notes` 说明
 - 如果链接无法读取，不要只给摘要；明确写出失败原因与缺口
 - `Follow-up needed before planning` 只写真正阻塞后续 planning 的缺口；无阻塞必须写 `none`
-- 输出必须能直接保存为 `.sdd-slim/<feature-name>.requirement.md`
+- 输出必须能直接保存为 feature folder 下的 `requirement.md`

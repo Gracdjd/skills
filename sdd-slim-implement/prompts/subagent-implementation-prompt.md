@@ -7,15 +7,18 @@ Use this when `sdd-slim-implement` dispatches a single `P*` implementation packa
 
 输入事实：
 - Spec: <spec path>
+- Plan: <plan path>
+- Worklog: <worklog path>
 - Current package: <P1>
 - Tasks in package: <T1, T2, T3>
 - Acceptance criteria: <relevant AC excerpts>
+- Relevant HOW / risks from plan: <relevant excerpts>
 - Allowed files / likely files: <paths>
 - Required validations: <tests / lint / typecheck / manual path>
 
 硬约束：
 - 只实现当前这个 `P*` 及其关联 `T*`，不要扩展到其他 `P*`
-- 不要修改 spec 状态、不要勾选 checklist、不要写 execution notes
+- 不要修改 `spec.md` 状态、不要勾选 `worklog.md` checklist、不要写 execution notes
 - 如果需要跨 `P*` 协调、修改 spec 外行为、或依赖缺失，请停止实现并明确报告 blocker
 - 如果你发现当前 `P*` 仍然过大，请只报告建议的更小边界，不要自行扩 scope
 
@@ -36,5 +39,5 @@ Use this when `sdd-slim-implement` dispatches a single `P*` implementation packa
 Rules:
 
 - 一个 prompt 只对应一个 `P*` 实现包
-- prompt 中必须显式给出关联 `T*`、边界文件和验证要求
+- prompt 中必须显式给出关联 `T*`、边界文件、相关 HOW 与验证要求
 - 如果主 agent 尚未完成独立性判断，不得用该模板并行派发多个 `P*`

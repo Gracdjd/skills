@@ -1,0 +1,84 @@
+# Checkout Button Loading State Plan
+
+> Feature Folder: `.sdd-slim/2026.04.06.checkout-button-loading-state/`
+> Spec File: `.sdd-slim/2026.04.06.checkout-button-loading-state/spec.md`
+> Requirement Archive: `.sdd-slim/2026.04.06.checkout-button-loading-state/requirement.md`
+> Worklog File: `.sdd-slim/2026.04.06.checkout-button-loading-state/worklog.md`
+
+## 1. Requirement Breakdown
+
+| ID  | Type          | Title              | Current Understanding                    | Source          | Status    |
+| --- | ------------- | ------------------ | ---------------------------------------- | --------------- | --------- |
+| P1  | requirement   | 提交中显示 loading | 点击提交后按钮进入 loading，直到请求结束 | 需求正文第 1 条 | confirmed |
+| P2  | requirement   | 阻止重复提交       | loading 期间再次点击无效                 | 需求正文第 2 条 | confirmed |
+| Q1  | clarification | 错误提示文案       | 失败时展示固定 toast 文案                | 需求正文第 3 条 | resolved  |
+
+## 2. Clarification Log
+
+### Q1 错误提示文案
+
+- Current understanding: 失败时展示通用错误提示
+- Why clarification is needed: 文案会影响验收标准和回归验证
+- User answer: 使用“提交失败，请稍后重试”
+- Final resolution: 固定 toast 文案为“提交失败，请稍后重试”
+- Status: resolved
+
+## 3. Point Confirmation Log
+
+### P1 提交中显示 loading
+
+- User-facing summary used in askquestion: 点击提交后按钮立即进入 loading，请求结束后恢复
+- Current understanding presented to user: checkout 提交动作需要一个覆盖成功与失败分支的 loading 生命周期
+- Code basis presented to user: `src/pages/checkout/index.tsx` 已有异步提交入口，`src/components/SubmitButton.tsx` 可承接按钮态 props
+- Proposed HOW presented to user: 复用 `isSubmitting` 状态并把 loading / disabled 透传到按钮组件
+- Candidate tasks presented to user: T1 页面状态接线；T2 按钮组件接收 loading / disabled
+- Suggested validation presented to user: checkout 关键路径 E2E + 类型检查
+- User answer: 确认
+- Final confirmed interpretation: loading 从点击开始，到成功或失败结束
+- Status: confirmed
+
+### P2 阻止重复提交
+
+- User-facing summary used in askquestion: loading 期间再次点击不应发起第二次请求
+- Current understanding presented to user: 防重提需要在 handler 和按钮禁用态两层同时成立
+- Code basis presented to user: `src/pages/checkout/index.tsx` 的 submit handler 是唯一提交入口
+- Proposed HOW presented to user: 在 handler 顶部增加 guard，并复用 loading 态禁用按钮
+- Candidate tasks presented to user: T3 提交 guard 与错误恢复
+- Suggested validation presented to user: checkout 重复点击与失败恢复 E2E
+- User answer: 确认
+- Final confirmed interpretation: 需要在 handler 层和按钮态层同时防重入
+- Status: confirmed
+
+## 4. Research Findings
+
+### P1 提交中显示 loading
+
+- Entry files: `src/pages/checkout/index.tsx`, `src/components/SubmitButton.tsx`
+- Related modules: checkout page state, submit button component
+- Reusable patterns: 现有保存表单流程已使用 `isSubmitting` 状态
+- Proposed execution approach: 复用 `isSubmitting` 布尔状态，提交前置 true，请求结束统一恢复 false
+- Candidate tasks: T1 页面状态接线；T2 按钮组件接收 disabled/loading
+- Suggested validations: checkout happy path E2E；类型检查
+- Risks: 请求异常分支可能遗漏恢复状态
+- Feasibility: high
+- Questions requiring user input: none
+
+### P2 阻止重复提交
+
+- Entry files: `src/pages/checkout/index.tsx`
+- Related modules: submit handler
+- Reusable patterns: 表单保存页已有重复点击 guard
+- Proposed execution approach: 在 handler 开头增加 `if (isSubmitting) return`
+- Candidate tasks: T3 提交 guard
+- Suggested validations: checkout duplicate-click E2E
+- Risks: 需要确认所有失败分支都能恢复状态
+- Feasibility: high
+- Questions requiring user input: none
+
+## 5. Pending User Input
+
+- none
+
+## 6. Coherence Notes
+
+- Reserved for final planning coherence check

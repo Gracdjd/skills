@@ -1,7 +1,8 @@
 # SDD Slim Submit — Branch and Commit Changes
 
-> 输入：当前工作区中的 git 改动 + 一个任务名（来自用户输入、当前 spec 或一次必要澄清）
+> 输入：当前工作区中的 git 改动 + 一个任务名（来自用户输入、当前 feature folder / spec 或一次必要澄清）
 > 输出：以下二者之一
+>
 > 1. 当前唯一阻塞问题
 > 2. 已创建的 branch + local commit 结果
 
@@ -22,7 +23,7 @@
 - 日期默认使用当前本地日期
 - `task-name` 优先来源：
 - 用户明确给出的任务名
-- 当前 `.sdd-slim/*.spec.md` 的文件名或标题
+- 当前 feature folder 名称，或其 `spec.md` 的文件名 / 标题
 - 当前轮用户要求中可以直接提取的任务短名
 - 仍不明确时，用 `askquestion` 只问一次
 - 任务名保留用户原语言，不要擅自翻译
@@ -97,7 +98,7 @@
 ### 步骤 1：解析任务名
 
 1. 优先使用用户明确提供的任务名
-2. 其次尝试从当前 spec 或当前任务上下文提取
+2. 其次尝试从当前 feature folder、`spec.md` 或当前任务上下文提取
 3. 仍然不明确时，用 `askquestion` 只问一次
 
 ### 步骤 2：检查 git 状态
