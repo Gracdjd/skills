@@ -11,14 +11,14 @@
 - 任务进度直接更新在 `Task Checklist`
 - 实现记录直接追加到 `Execution Notes`
 
-## Context Reset Preflight（CRITICAL）
+## Context Compression Preflight（CRITICAL）
 
-进入实现前，先做一次上下文重置预处理：
+进入实现前，先做一次上下文压缩预处理：
 
-- 如果当前环境暴露了可调用的 `clear` / reset / session-reset 工具，先调用一次
-- 否则，如果当前环境支持 new session / fresh run，优先在新 session 中开始 implement
-- 否则，如果当前环境支持 `compact` / `compress`，可以作为降级方案使用，但必须明确说明它不等价于真正 clear
-- 如果以上能力都没有，不要伪造它们；改为把 implement 当成一次 fresh-context pass
+- 默认只尝试一次 `compact` / `compress`，把现有对话上下文压缩后再进入 implement
+- 不主动触发 `clear` / reset / session-reset，也不主动开启 new session / fresh run 作为替代
+- 如果当前环境支持 `compact` / `compress`，必须明确说明它只是上下文压缩，不是 fresh context，也不等价于真正 clear
+- 如果当前环境不支持 `compact` / `compress`，不要伪造它们，也不要改走 clear / new session；改为显式说明“未进行上下文压缩”后继续
 - 无论走哪条路径，后续都必须重新读取 spec，并只以“选定 spec + 当前代码”为事实来源
 
 ## HARD GATES
@@ -46,18 +46,16 @@
 
 ## 流程
 
-### 步骤 0：执行 context-reset preflight
+### 步骤 0：执行 context-compression preflight
 
-1. 检查当前环境是否真的提供 `clear` / reset / session-reset 工具
-2. 有则调用一次
-3. 没有则检查是否支持 new session / fresh run：
-   - 支持则在新 session 中重新开始 implement
-4. 如果也不支持新 session，再检查是否支持 `compact` / `compress`：
-   - 支持则执行一次压缩，并明确声明这是 fallback，不是 clear
-5. 如果以上都不支持，则明确切换成 fresh-context 思维：
-   - 不依赖 plan 阶段的对话记忆
-   - 重新读取 spec
-   - 重新读取当前代码
+1. 检查当前环境是否真的提供 `compact` / `compress` 能力
+2. 如果支持，则执行一次压缩，并明确声明这是 context compression，不是 clear，也不是 fresh context
+3. 如果不支持：
+   - 明确说明当前轮未进行上下文压缩
+   - 不伪造 `compact/compress`
+   - 不改用 `clear/reset` 或 `new session/fresh run`
+4. 重新读取 spec
+5. 重新读取当前代码
 
 ### 步骤 1：选择目标 spec
 

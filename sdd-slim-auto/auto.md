@@ -17,7 +17,7 @@
 - 不修改 `sdd-slim-plan` / `sdd-slim-implement` / `sdd-slim-review` / `sdd-slim-fix` 的任何定义、模板、提问方式或停止条件
 - 不通过弱化 gate 来实现自动化；只改变下一阶段的触发方式
 - `sdd-slim-plan` 阶段的 `Q*` 提问、`P*` 确认、默认串行 subagent 探索，以及在检测到 `--mutiAgent` 或用户明确要求后先经 `askquestion` 确认再切换 multiAgent 并行探索的规则，必须完整保留
-- `sdd-slim-implement` 阶段的 context-reset preflight、只实现已确认 `T*`、subagent-per-P 执行模型、主 agent 审核与 spec 回写职责、剩余 `P*` 重算与阻塞时停止，必须完整保留
+- `sdd-slim-implement` 阶段的 context-compression preflight、只实现已确认 `T*`、subagent-per-P 执行模型、主 agent 审核与 spec 回写职责、剩余 `P*` 重算与阻塞时停止，必须完整保留
 - `sdd-slim-plan` 若缺失任一 `P*` 的 subagent 研究或用户确认，禁止自动进入 implement
 - `sdd-slim-plan` 若任何代码库 exploration 不是由 subagent 完成，也禁止自动进入 implement
 - `sdd-slim-implement` 若未按规则持续回写 spec、或发现实现偏离 spec 但未先记录 deviation/blocker，禁止自动进入 review
@@ -84,8 +84,8 @@
 额外编排要求：
 
 - 把用户对 `sdd-slim-auto` 的显式触发，视为对 implement 阶段的显式授权
-- 在进入实现前，仍必须执行 context-reset preflight
-- 如果当前环境没有真实的 `clear` / reset / new session / compact 能力，不得伪造；明确采用 fresh-context fallback，并重新读取 spec 与当前代码
+- 在进入实现前，仍必须执行 context-compression preflight
+- implement preflight 默认只做 `compact/compress`；如果当前环境没有该能力，不得伪造，也不得改用 `clear` / reset / new session，必须明确说明未压缩并重新读取 spec 与当前代码
 - 只实现已确认的 `T*`
 - 默认沿用 implement 的 subagent-per-P 模型：以单个 `P*` 作为实现包，由主 agent 委派一个 subagent 处理该 `P*` 下关联的多个 `T*`
 - 如果检测到 `--mutiAgent` 或用户明确要求开启多个 agent / subagent 并行实现，implement 阶段可直接并行处理多个独立 `P*` 实现包，无需额外确认

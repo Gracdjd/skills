@@ -2,7 +2,7 @@
 name: sdd-slim-implement
 description: |
   Use when: 已有用户确认过的 canonical `*.spec.md`，现在要严格按文档实现。
-  进入实现前先做 context-reset preflight：优先调用 `clear` / reset；若无，则优先开启 new session / fresh run；若仍无，则再用 compact / compress 作为降级，并明确其不等价于真正 clear。
+  进入实现前先做 context-compression preflight：默认只做一次 compact / compress 上下文压缩，不主动开启 fresh context；若当前环境不支持压缩，也不得改用 clear / reset / new session 作为替代，而是显式说明未压缩并重新读取 spec 与当前代码。
   然后重新读取 spec；实现阶段必须把每个未完成 P* 对应的一组 T* 作为一个实现包先交给 subagent 执行；若检测到 `--mutiAgent` 或用户明确要求多个 agent 并行实现，则只可并行处理多个彼此独立的 P* 包。主 agent 负责分派、审核、逐条回写 checklist / execution notes、重新计算剩余未完成 P* 与 stop condition；只有全部未完成 P* 均已实现完毕或出现 blocker 时才能停止。
   可做必要澄清，但不自动进入 review/fix。
 user-invocable: true
@@ -15,7 +15,7 @@ user-invocable: true
 ## 路由
 
 1. 读取 `implement.md`
-2. 实现前预处理参考 `prompts/context-reset-preflight.md`
+2. 实现前预处理参考 `prompts/context-reset-preflight.md`（内容为上下文压缩 preflight）
 3. spec 选择提问参考 `prompts/spec-selection-question.md`
 4. 阻塞澄清提问参考 `prompts/blocking-question.md`
 5. subagent 实现包下发参考 `prompts/subagent-implementation-prompt.md`
@@ -26,10 +26,10 @@ user-invocable: true
 ## 独立性规则
 
 - 本 skill 只能由用户手动调用
-- 开始实现前，按顺序执行 context reset preflight：`clear/reset` → `new session/fresh run` → `compact/compress`
-- 如果当前环境没有 `clear` 工具，不得假设其存在
-- 如果环境支持新建 session，应优先以新 session 进入 implement
-- 如果只能 compact / compress，必须明确说明这只是上下文压缩，不等价于真正 clear
+- 开始实现前，默认只执行一次 context compression preflight：优先且仅尝试 `compact/compress`
+- 如果当前环境不支持 `compact/compress`，不得假设其存在，也不得主动改用 `clear/reset` 或 `new session/fresh run`
+- 如果完成的是 `compact/compress`，必须明确说明这只是上下文压缩，不是 fresh context，也不等价于真正 clear
+- 如果当前环境连 `compact/compress` 也不支持，必须明确说明“未进行上下文压缩”，然后重新读取 spec 与当前代码继续 implement
 - 如有必要，可以用 `askquestion` 做阻塞澄清
 - 实现必须把 spec 当作唯一执行边界：只实现已确认 `T*`，不得因为“顺手修一下”“先跑通主链路”而扩 scope
 - 默认且强制采用 subagent-per-P：每个未完成 `P*` 实现包都必须先交给一个 subagent；主 agent 只负责选择当前 `P*` 包边界、下发约束、审核结果、决定是否接受
