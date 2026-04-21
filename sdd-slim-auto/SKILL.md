@@ -39,3 +39,4 @@ user-invocable: true
 - 不为了自动化而弱化任何阶段的 hard gate、scope discipline 或 stop condition
 - 在 implement / review 阶段，只要仍有 runnable 工作包，auto 就必须继续闭环；不得以“已完成当前一波，下一波建议如下”之类的半途交棒文案结束当前调用
 - 如果用户在 auto 流程中途发来的是状态确认或事实查询，例如“现在是否完成”“是否已跑最终 e2e”“还差哪些任务”，主 agent 必须先给 grounded answer，再继续同一个 auto 闭环；除非用户明确要求“只回答 / 暂停 / 先别继续”
+- 单次较大验证通过也只算阶段内 checkpoint，不算 auto 终态；只有完成最终 review、final verification harness 与统一报告后，auto 才能宣称整个需求完成

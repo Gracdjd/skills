@@ -29,6 +29,7 @@
 - `sdd-slim-implement` 若把当前 `T*` 的完成判定、deviation / blocker 判定或 `spec.md` 状态同步外包给 subagent，也禁止自动进入 review
 - `sdd-slim-review` 阶段必须先 review 再直接 repair actionable findings，不得在 findings 产出后停成一个新的独立 fix 阶段
 - 自动化的含义是：当当前阶段已经合法完成且没有用户阻塞时，直接进入下一阶段；不是跳过规则
+- 任意单次较大验证，例如一次 browser smoke、一次大范围测试通过、一次局部 harness 通过、一次子集 e2e 通过，都只算阶段内 evidence checkpoint；除非已满足 final review + final harness + project regression 的收尾条件，否则不得把它当成整个 auto 流程的完成信号
 
 ## 显式授权规则（CRITICAL）
 
@@ -109,6 +110,7 @@
 - 如果 implement 因歧义、缺少输入或越界风险而阻塞，必须在本轮内选择最保守实现路径；只有当任何保守路径都不安全时，才写 blocker note 并以 implement 终态收口，不等待用户
 - 只有在全部剩余未完成 `T*` 已被处理到终态，且全部 `P*` 已被派生聚合到终态后，implement 才能达到 `implemented` 或 `implemented-with-issues`；此时不询问是否继续 review，直接进入阶段 3
 - 只要 implement 阶段仍存在依赖已满足、未被 blocker 阻断的 runnable `T*`，auto 就必须继续推进 implement；不得输出“下一波建议顺序”或“你下一条可以继续这些任务”后提前停止
+- implement 阶段即使完成了一次较大验证，也不得询问“要不要继续执行下面的任务”；只要 review 还未完成，当前 auto 链路就不得把该验证当成最终完成
 
 ## 阶段 3：Review
 
@@ -144,6 +146,7 @@
 - final verification harness 必须显式执行或说明 `.sdd-slim/_project/test.md` 中的项目级回归基线
 - 如果某个 finding 的目标行为或成功标准不清楚，必须按 `spec.md`、`Acceptance Criteria`、`Verification Strategy` 与当前代码行为做最保守解释；无法安全关闭时标记为 `deferred` 或 `blocked`，但本轮仍继续收口
 - 修复完成后停止；不要自动再开启第二轮完整 review
+- review 阶段中任何单次较大验证通过，也只算收口过程中的证据；只有 final verification harness、project regression result、coverage / success rate 与最终 report 都已落盘，才允许把整个 auto 流程判为完成
 
 ## 收尾规则
 
@@ -187,6 +190,7 @@
 - 不得在 implement / review 尚未达到终态时，用“下一波建议”“后续建议顺序”“如果你不改方向我下一条继续”之类的话术把剩余 runnable 工作交回给用户
 - 若仍有 runnable 工作包，这类输出视为提前收口错误，不属于 blocker summary
 - 不得把对“是否已完成/是否已跑 e2e/还差什么”这类状态问句的回答，当成一次合法停机点；除非用户明确要求只回答或暂停
+- 不得因为某次较大验证通过，就询问用户“要不要继续下面任务”“是否继续剩余任务”；这类提问在 auto 模式下属于编排错误
 
 ### C. 自动链路完整跑完时
 
@@ -219,3 +223,4 @@
 - 不得在标准 implement / review 阶段用 `askquestion` 暂停等待用户
 - 不得在 implement / review 仍有 runnable 工作包时，用批次总结加下一步建议替代继续执行
 - 不得把 auto 流程中的状态问句误判成 standalone QA，从而在回答后放弃继续闭环
+- 不得把单次较大验证通过误判成 auto 终态，并在 review 完成前询问用户是否继续剩余任务

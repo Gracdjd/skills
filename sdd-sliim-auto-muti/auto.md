@@ -74,6 +74,7 @@
 - 如果存在多个彼此独立的 `T*` 实现包，主 agent 默认直接开启 multiAgent
 - 如果发现共享关键文件、接口、迁移顺序或验证环境，则自动降级为串行，并在 `Execution Notes` 记录原因
 - 即使处于 multiAgent 模式，只要仍有 runnable `T*` 实现包，就必须继续当前 implement 闭环；不得用“下一波并行建议”代替继续执行
+- 即使某一轮并行结果已经通过一次较大验证，也只能视为 implement checkpoint；只要 final review 尚未完成，就不得停下来询问是否继续剩余任务
 
 ## 阶段 3：Review
 
@@ -85,6 +86,7 @@
 - 如果存在多个彼此独立的 review 包、测试生成包或修复包，主 agent 默认直接开启 multiAgent
 - 只要发现交叉文件、共享测试环境、共享 selectors 或同一 harness 前置依赖，就必须自动退回串行
 - 即使处于 multiAgent 模式，只要仍有 runnable review / `TG*` / `R*` 包，就必须继续当前 review 闭环；不得输出剩余批次建议后提前停止
+- 即使并行 review 中某次较大验证已经通过，也不得把它当成终态；只有 final verification harness 与最终报告完成后，才允许结束 auto-muti
 
 ## 收尾规则
 
@@ -98,3 +100,4 @@
 - 不得修改原有 `sdd-slim-auto` 文件来实现本变体
 - 不得在仍有 runnable 工作包时，用“下一波建议顺序”或“下一条继续这些包”来替代继续执行
 - 不得把 auto 流程中的状态问句误判成 standalone QA，从而在回答后停止 multiAgent 闭环
+- 不得因为某次较大验证通过，就在 multiAgent 流程里询问用户是否继续剩余任务；在本模式下这属于提前收口错误
