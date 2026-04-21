@@ -30,3 +30,4 @@ user-invocable: true
 - implement / review 阶段同样把本 skill 触发视为明确的并行意图；主 agent 只负责独立性判断与自动降级
 - 任何阶段只要发现并行不安全，就必须退回串行，并把原因写入对应文档；不得为了并行而牺牲边界控制
 - 除 multiAgent 默认开启外，其余阶段 hard gates、scope discipline、stop condition、review 测试生成与 final harness 规则都与 `sdd-slim-auto` 保持一致
+- 用户若在 auto 流程中途发来状态确认或事实查询，也仍视为同一闭环内的中途 checkpoint：主 agent 必须先回答，再继续；除非用户明确要求只回答或暂停

@@ -52,6 +52,7 @@
 
 - 如果有多个彼此独立的包，优先进入 multiAgent
 - 如果只有一个包或存在共享依赖，立即退回串行
+- 如果当前轮只是回答了同一需求上的状态问句，例如“是否已完成最终 e2e”“还差什么”，回答后仍必须继续同一个恢复逻辑，而不是停成纯问答
 
 ## 阶段 1：Plan
 
@@ -72,6 +73,7 @@
 - 把当前 skill 的显式触发，视为 implement 阶段已经获得了并行实现授权
 - 如果存在多个彼此独立的 `T*` 实现包，主 agent 默认直接开启 multiAgent
 - 如果发现共享关键文件、接口、迁移顺序或验证环境，则自动降级为串行，并在 `Execution Notes` 记录原因
+- 即使处于 multiAgent 模式，只要仍有 runnable `T*` 实现包，就必须继续当前 implement 闭环；不得用“下一波并行建议”代替继续执行
 
 ## 阶段 3：Review
 
@@ -82,6 +84,7 @@
 - 把当前 skill 的显式触发，视为 review 阶段已经获得了并行 review / `TG*` / `R*` 的授权
 - 如果存在多个彼此独立的 review 包、测试生成包或修复包，主 agent 默认直接开启 multiAgent
 - 只要发现交叉文件、共享测试环境、共享 selectors 或同一 harness 前置依赖，就必须自动退回串行
+- 即使处于 multiAgent 模式，只要仍有 runnable review / `TG*` / `R*` 包，就必须继续当前 review 闭环；不得输出剩余批次建议后提前停止
 
 ## 收尾规则
 
@@ -93,3 +96,5 @@
 - 不得为了并行而跳过 plan 的 `Q*` / `P*` 收口
 - 不得为了并行而跳过 review 的测试生成或 final harness
 - 不得修改原有 `sdd-slim-auto` 文件来实现本变体
+- 不得在仍有 runnable 工作包时，用“下一波建议顺序”或“下一条继续这些包”来替代继续执行
+- 不得把 auto 流程中的状态问句误判成 standalone QA，从而在回答后停止 multiAgent 闭环

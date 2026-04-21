@@ -42,6 +42,8 @@
 - 实现过程中，`worklog.md` 必须持续保持与当前真实进度同步；代码进度不得领先于文档回写超过当前正在执行的一个 `T*` 包增量
 - 在当前 `T*` 执行过程中，每完成一个 `T*` 后，必须先回写 `worklog.md`，再继续下一个 `T*`
 - implement 的 stop condition 只能是以下两类之一：全部未完成 `T*` 均已被处理到终态，且所有 `P*` 已被重新聚合为终态，或出现无法安全继续消化的 blocker；不得因为某个 `P*` 或某个局部任务组已完成就提前结束整个 implement 阶段
+- 只要仍存在依赖已满足、未被 blocker 阻断且边界足够明确的 `T*`，implement 就必须继续派发；不得以“本轮先完成一批任务并给出下一批建议”作为收尾
+- 如果输出里出现“下一波建议”“建议按这个顺序继续”“如果你不改方向我下一条继续”之类把剩余 runnable `T*` 交还给用户决定的措辞，视为提前收口错误；除非当前轮已经写入 blocker 并达到终态，否则不得停止
 - 如果发现当前实现依赖文档未写明的假设、需要新增任务、或需要改动未列入 `T*` 的行为边界，必须先停下：记录 assumption / blocker / deviation，并优先按最保守路径继续；只有在任何保守路径都不安全时才允许结束 implement
 - 如果实现过程中已经发生偏离，必须先把已发生的事实补写回 `worklog.md`，必要时同步 `spec.md` 状态，再继续任何开发动作
 - 实现中出现新的歧义或缺失信息时，不得用 `askquestion` 打断用户；必须基于 `spec.md`、`plan.md`、`worklog.md` 与当前代码选择最保守解释并记录
@@ -134,6 +136,11 @@
 
 13. 在继续下一个串行 `T*` 或结束一轮并行归并前，主代理必须重新读取刚写回的 `worklog.md` 与 `spec.md`，确认 checklist / execution notes 已落盘且与当前代码状态一致，并重新计算剩余未完成 `T*` 与派生的 `P*` 完成态
 14. 只要仍存在未处理完成且未阻塞的 `T*`，就必须继续进入下一轮 `T*` 派发；不得提前收尾
+15. 进度汇报只能作为中间 commentary，不得作为 final 收尾替代 stop condition：
+
+- 可以说明已完成了哪些 `T*`、当前正在处理哪个 `T*`
+- 但只要还存在 runnable `T*`，就不得输出“下一波/下一轮建议顺序”后停止
+- 若确实因为 blocker 停止，必须按 blocker 路径收口，而不是把剩余 `T*` 伪装成“建议后续执行顺序”
 
 ### 步骤 4：阻塞处理
 
@@ -192,6 +199,12 @@ subagent 相关补充：
   - `spec.md` 状态改为 `implemented` 或 `implemented-with-issues`
   - 输出 changed files / validations / deviations / remaining risks
 - 直接停止
+
+禁止的伪收尾模式：
+
+- 不得在仍有 runnable `T*` 时输出“本轮先做到这里”
+- 不得在仍有 runnable `T*` 时输出下一批建议顺序并把 baton 交还给用户
+- 不得把“当前已经完成的局部批次总结”伪装成 blocker summary
 
 ## Guardrails
 

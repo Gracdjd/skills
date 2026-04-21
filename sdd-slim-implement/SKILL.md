@@ -41,6 +41,8 @@ user-invocable: true
 - 主 agent 不得把 spec 状态管理、任务完成判定、deviation / blocker 认定完全外包给 subagent
 - 每完成一个 `T*`，都必须由主 agent 立即回写 `worklog.md` 中的 `Task Checklist` 与 `Execution Notes`，并在需要时同步 `spec.md` 状态；不得拖到一组任务或一个来源点全部代码写完后再统一补记
 - 只有当所有未完成 `T*` 都被重新计算为已完成、已部分完成但可接受，且所有 `P*` 已被派生聚合到已完成、已部分完成但可接受，或因 blocker 停止时，implement 才允许结束；不得在仅完成部分 `T*` 或部分 `P*` 后提前收尾
+- 只要仍存在依赖已满足、边界明确、且未被 blocker 阻断的 `T*`，当前 implement 调用就必须继续推进；不得把“当前一波先做到这里”当作合法终态
+- 不得在仍有可继续执行的 `T*` 时输出“下一波建议”“推荐顺序”“如果你不改方向我下一条继续”之类的半途交棒收尾；这类输出属于 workflow bug，而不是正常进度汇报
 - 一旦发现实现已经偏离 spec、跳过回写、或需要依赖未写明假设，必须立即先回写 assumption / deviation / blocker，再决定是否沿最保守路径继续
 - 如果某项工作尚未写回 `worklog.md`，就不得宣称该 `T*` 已完成
 - 如果验证尚未完成，就不得把该 `T*` 标为 `[x]`

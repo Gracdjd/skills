@@ -13,11 +13,11 @@
 
 ## 1. Requirement Breakdown
 
-| ID  | Type          | Title              | Current Understanding                    | Source          | Status    |
-| --- | ------------- | ------------------ | ---------------------------------------- | --------------- | --------- |
-| P1  | requirement   | 提交中显示 loading | checkout 提交链路需要显式按钮状态流转    | 需求正文第 1 条 | confirmed |
+| ID  | Type          | Title              | Current Understanding                            | Source          | Status    |
+| --- | ------------- | ------------------ | ------------------------------------------------ | --------------- | --------- |
+| P1  | requirement   | 提交中显示 loading | checkout 提交链路需要显式按钮状态流转            | 需求正文第 1 条 | confirmed |
 | P2  | requirement   | 阻止重复提交       | duplicate submit 需要在 handler 与按钮态双层成立 | 需求正文第 2 条 | confirmed |
-| Q1  | clarification | 错误提示文案       | 失败时展示固定 toast 文案                | 需求正文第 3 条 | resolved  |
+| Q1  | clarification | 错误提示文案       | 失败时展示固定 toast 文案                        | 需求正文第 3 条 | resolved  |
 
 ## 2. Clarification Log
 

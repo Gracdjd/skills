@@ -26,6 +26,8 @@
 - 每条 actionable finding 必须有稳定的 `R*` 编号，并在同一阶段内被修复、deferred 或阻塞说明收口
 - final harness 必须生成统一测试报告，其中 unit coverage 与 e2e success rate 两个字段都必须出现；未执行的一侧也必须明确给出 `skipped` / `blocked` 原因
 - 默认串行；如果用户明确要求并行 review / repair，主 agent 必须直接做独立性判断；可安全并行则开启 multiAgent，不可安全并行则退回串行并记录原因
+- 只要仍存在未处理完成、未被 blocker 阻断的 review 包、`TG*` 包、`R*` 包或 harness 回流问题，review 就必须继续；不得用“当前先收口一批、下一波再处理”作为合法终态
+- 如果输出里出现“下一波建议”“后续建议顺序”“如果你不改方向我下一条继续”之类把剩余 runnable review 工作交回给用户决定的措辞，视为提前收口错误；除非当前轮已经达到 blocker 或最终终态，否则不得停止
 
 ## 前置检查
 
@@ -69,6 +71,7 @@
 - harness 包：默认收敛为一个 final verification harness 包，由主 agent 串行汇总结果
 - 默认串行；如果检测到 `--mutiAgent` 或用户明确要求并行，主 agent 必须直接判断是否开启并行
 - 只有确认彼此独立时，才允许对 review 包、`TG*` test generation 包或 `R*` repair 包并行派发 subagent；否则自动退回串行，并把原因写入 `Repair Notes` 或 `Review Findings`
+- 进度汇报只能作为中间 commentary，不得替代 stop condition；只要还有 runnable 包，就不得输出“下一波建议顺序”后停止
 
 ## 两阶段审查
 
@@ -249,6 +252,12 @@ review 阶段必须把 `plan.md` 的 `Test Design Handoff` 落成最终可执行
 - blockers (if any)
 
 然后停止。
+
+禁止的伪收尾模式：
+
+- 不得在仍有 runnable review / `TG*` / `R*` / harness 回流问题时输出“本轮先做到这里”
+- 不得在仍有 runnable 工作包时输出下一批建议顺序并把 baton 交还给用户
+- 不得把局部批次总结伪装成 blocker summary 或最终 review 结论
 
 ## 非打断规则
 

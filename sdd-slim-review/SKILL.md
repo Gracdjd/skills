@@ -42,3 +42,5 @@ user-invocable: true
 - 标准 review 阶段禁止用 `askquestion` 打断用户；范围不清、修复标准含糊或目标有多解时，必须自主做最保守判断并记录 assumption / deferred / blocker
 - 不自动进入任何其他 skill
 - review 完成后必须同步完成本轮 actionable findings 的直接修复，并在收尾前执行 final verification harness；若 required harness 无法完成，必须明确记录 blocker / deferred 原因，然后停止
+- 只要仍存在未处理完成、未被 blocker 阻断的 review 包、`TG*` 包、`R*` 包或 harness 回流问题，当前 review 调用就必须继续；不得用“下一波 review / repair 建议”替代继续执行
+- 不得在仍有 runnable review 工作包时输出“下一波建议”“推荐后续顺序”“如果你不改方向我下一条继续”之类的半途交棒收尾；这类输出属于 workflow bug
