@@ -42,6 +42,7 @@ Use this when all `P*` and `Q*` have been processed, before finalizing the artif
 
 ### 5. 依赖检查
 - `T*` 之间的执行顺序依赖是否明确
+- `Task Checklist` 中每个 `T*` 是否显式声明了 `Dependencies`（`none` 或上游 `T*`）
 - 是否存在循环依赖
 - 并行执行的任务是否真的可以并行
 

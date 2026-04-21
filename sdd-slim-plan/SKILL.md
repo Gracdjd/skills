@@ -4,6 +4,7 @@ description: |
   Use when: 用户希望先把需求文档/需求文本整理成一个按功能目录组织的 canonical artifact set。
   该 skill 会先由主代理直接获取 / 归一化需求，并在 `.sdd-slim/<YYYY.MM.DD>.<feature-name>/` 下生成或更新 `requirement.md`、`spec.md`、`plan.md`、`worklog.md`；同时确保项目级 `.sdd-slim/_project/test.md` 存在。它不写代码，也不自动推进到其他 skill。
   plan 阶段负责把验证契约写清，包括 feature-level `Verification Strategy` 与 review 可直接落地的 `Test Design Handoff`（unit cases / e2e journeys / suggested test files）；但不生成最终可执行测试代码。
+  生成 `T*` 时必须以前一阶段 implement 的 `subagent-per-T` 为约束：每个 `T*` 默认就是一个独立实现包，粒度过大必须继续拆分，不能把“留给 implement 再拆”当作正常路径。
   主代理必须直接分析当前用户输入；如果消息里已有链接就直接抓取，如果没有链接但有需求文本就直接归档，不能先让用户再选择输入类型。
   requirement 归档阶段首先要判断当前输入里是否存在可用的需求文档正文，并去重重复来源 / 重复粘贴内容。
   对每个任务点的代码库探索与 HOW 生成，必须交给 subagent 完成；每个 `P*` 在代码研究完成后都必须通过 `askquestion` 向用户确认一次，即使是简单、看似明确的 `P*` 也不能跳过；若仍有额外阻塞项，再继续逐个 `askquestion` 关闭。
@@ -43,6 +44,9 @@ user-invocable: true
 - 必须把 feature artifacts 放进 `.sdd-slim/<YYYY.MM.DD>.<feature-name>/`，避免所有需求产物平铺在 `.sdd-slim/` 根目录
 - 规划阶段必须确保项目级 `.sdd-slim/_project/test.md` 存在；若不存在，本轮创建 skeleton，供后续每个需求的 final verification harness 复用
 - plan 阶段必须把 feature-level `Verification Strategy` 与 `Test Design Handoff` 写清；这些内容供 review 阶段生成最终 unit / e2e 测试用例使用，但 plan 本身不生成测试代码
+- planning 阶段写入 `worklog.md` 的每个 `T*` 默认都要能在 implement 阶段被单独派发给一个 subagent；不得生成需要 implement 主 agent 二次拆包的 jumbo `T*`
+- 每个 `T*` 至少要满足：单一主目标、最小必要文件范围、单一主验证焦点、明确 `Dependencies`
+- 如果一个候选 `T*` 同时覆盖多个用户可感知行为、多个关键文件族或多条独立验证路径，必须在 plan 阶段继续拆分
 - 如果存在阻塞 planning 的 follow-up，主代理必须在写完对应 planning 文档后立即通过 `askquestion` 发出第一个阻塞问题，然后停止等待用户回答
 - requirement 归档由主代理直接执行；如需抓取链接或本地文档正文，由主代理直接调用对应 MCP / 工具
 - 每个 `P*` 在代码研究完成后都必须通过 `askquestion` 做一次用户确认，不得因需求简单或看似明确而跳过
@@ -55,6 +59,7 @@ user-invocable: true
 - multiAgent 模式只放开“代码库探索 / 问题研究”的并行度；文档写回、`P*` 用户确认、`Q*` 澄清、最终任务化与 ready 判定仍必须由主代理串行收口
 - 如果某个 `P*` 还没有对应的 subagent 研究结果，就不得写入该 `P*` 的 `Research Findings`、不得生成该 `P*` 的 `T*`、不得声称 planning 完成
 - 每个 `P*` 必须保留可审计的 subagent 产物痕迹：至少要能在 `plan.md` 中看到与该 `P*` 对应的代码依据、HOW、风险和验证建议
+- subagent 返回的 `Candidate tasks` 必须面向 implement-ready `T*` 包；主代理若发现粒度过大、依赖不清或仍需要 implement 再拆，必须重做拆分后再写入 `worklog.md`
 - 如果主代理在 planning 中发现自己已经绕过了 subagent 或跳过了 `P*` 确认，必须立即停止后续 planning，补做缺失步骤，而不是继续推进到下一个 `P*`
 - 完成后不主动询问是否进入 `sdd-slim-implement`
 - 不触发 `sdd-slim-review`

@@ -50,6 +50,9 @@
 - 如果 subagent 返回新的未决问题，必须把它们转成 `Q*` 并继续用 `askquestion` 逐个关闭
 - 如果 requirement 归档阶段或 subagent 已经暴露阻塞性问题，主代理必须在写完文档后立即发出下一个 `askquestion`，不得长时间延后提问
 - 只有当某个 `P*` 已完成代码研究、用户确认、验收标准与验证方式明确后，才能生成 `T*`
+- planning 阶段写入 `worklog.md` 的每个 `T*` 默认就是 implement 阶段的单个 subagent 实现包；不得把“implement 再拆”当作正常路径
+- 每个 `T*` 至少必须具备：单一主目标、最小必要文件范围、单一主验证焦点、明确 `Dependencies`
+- 如果一个候选 `T*` 同时覆盖多个用户可感知行为、多个关键文件族、多个独立验证路径，或仍需要 implement 主 agent 再次拆包，说明粒度过大，必须在 plan 阶段继续拆分
 - plan 阶段必须先写清 feature-level `Verification Strategy` 与 `plan.md` 里的 `Test Design Handoff`；这两个产物定义“测什么”，供 review 阶段落地成最终 unit / e2e 测试代码，但 planning 本身不得生成可执行测试文件
 - 所有 `P*` 和 `Q*` 处理完成后，必须执行整体连贯性分析，确认任务可串接且无漏洞
 - 连贯性分析发现漏洞时，必须通过 `askquestion` 向用户确认补充方案
@@ -173,7 +176,7 @@ prompt 模板见 `prompts/requirement-archive-prompt.md`。
    - 涉及模块
    - 可复用实现
    - HOW 建议
-   - 候选任务拆分
+   - 候选任务拆分（按 implement-ready `T*` 包拆分，并标注依赖）
    - 验证建议
    - 候选 unit cases / e2e journeys
    - 建议测试文件落点
@@ -182,7 +185,7 @@ prompt 模板见 `prompts/requirement-archive-prompt.md`。
 3. 主代理在收到 subagent 返回结果后，先自行审查 HOW 建议是否：
    - 基于现有代码模式，而非凭空发明
    - 改动范围合理
-   - 任务拆分粒度适当
+   - 任务拆分粒度适当，且每个候选 `T*` 都已经小到可被 implement 阶段单独派发给 subagent
    - 验证方式可落地
    - 如果 HOW 不正确或不充分，重新调用 subagent 对该 `P*` 再次探索，直到 HOW 足够正确
 4. HOW 确认正确后，把 subagent 结论回写到 `plan.md` 的 `Research Findings`，并同步更新 `spec.md` 的范围 / 验收 / 验证信息
@@ -253,12 +256,15 @@ multiAgent 模式下的补充规则：
 - HOW（来自 subagent 研究结论）
 - 验收标准
 - 验证方式
+- `Dependencies`（写 `none` 或依赖的上游 `T*`）
 
 额外一致性要求：
 
 - 每个 `T*` 的 `Validation` 必须与 feature-level `Required Harness` 相兼容
 - 如果 `Required Harness = e2e`，则至少要能映射到某个 critical journey
 - 如果 `Required Harness = unit`，则至少要能映射到某类 deterministic unit validation 或 coverage 目标
+- 每个 `T*` 默认只服务一个主目标；如果同一任务需要多个主验证或跨多个关键文件族，继续拆分
+- 每个 `T*` 的 `Dependencies` 必须显式写出 `none` 或依赖的上游 `T*`；不得把执行顺序留给 implement 阶段猜测
 - 同一个 `P*` 生成的多个 `T*` 应在 `worklog.md` 的 `Task Checklist` 中保持连续，便于主 agent 在 T 级实现时审计来源点、判断顺序依赖并做 `P*` 聚合
 
 如果某个 `P*` 还不够清晰：
@@ -318,6 +324,7 @@ multiAgent 模式下的补充规则：
 5. 所有 `Q*` 都已关闭，或 spec 状态明确为 `needs-user-input`
 6. `spec.md`、`plan.md`、`worklog.md` 三者之间的引用关系一致
 7. `Verification Strategy` 已引用 `.sdd-slim/_project/test.md`
+8. 每个 `T*` 都已显式写出 `Dependencies`，且不存在缺失、悬空或循环依赖
 
 如果自检发现 planning 过程中遗漏了 subagent / 用户确认 / coherence check：
 

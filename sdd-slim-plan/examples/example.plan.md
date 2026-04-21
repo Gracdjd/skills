@@ -31,8 +31,9 @@
 - Current understanding presented to user: checkout 提交动作需要一个覆盖成功与失败分支的 loading 生命周期
 - Code basis presented to user: `src/pages/checkout/index.tsx` 已有异步提交入口，`src/components/SubmitButton.tsx` 可承接按钮态 props
 - Proposed HOW presented to user: 复用 `isSubmitting` 状态并把 loading / disabled 透传到按钮组件
-- Candidate tasks presented to user: T1 页面状态接线；T2 按钮组件接收 loading / disabled
-- Suggested validation presented to user: checkout 关键路径 E2E + 类型检查
+- Candidate tasks presented to user: T1 按钮组件扩展（独立实现包）；T2 页面状态接线（依赖 T1）
+- Task packaging / dependency notes presented to user: 先扩按钮接口，再接页面状态，避免单个 `T*` 同时承接组件 API 变更和页面状态接线
+- Suggested validation presented to user: T1 类型检查；T2 checkout 关键路径 E2E + 类型检查
 - User answer: 确认
 - Final confirmed interpretation: loading 从点击开始，到成功或失败结束
 - Status: confirmed
@@ -43,7 +44,8 @@
 - Current understanding presented to user: 防重提需要在 handler 和按钮禁用态两层同时成立
 - Code basis presented to user: `src/pages/checkout/index.tsx` 的 submit handler 是唯一提交入口
 - Proposed HOW presented to user: 在 handler 顶部增加 guard，并复用 loading 态禁用按钮
-- Candidate tasks presented to user: T3 提交 guard 与错误恢复
+- Candidate tasks presented to user: T3 提交 guard 与错误恢复（依赖 T2）
+- Task packaging / dependency notes presented to user: guard 与错误恢复共享同一 handler 和同一验证路径，保留为单个实现包
 - Suggested validation presented to user: checkout 重复点击与失败恢复 E2E
 - User answer: 确认
 - Final confirmed interpretation: 需要在 handler 层和按钮态层同时防重入
@@ -57,8 +59,10 @@
 - Related modules: checkout page state, submit button component
 - Reusable patterns: 现有保存表单流程已使用 `isSubmitting` 状态
 - Proposed execution approach: 复用 `isSubmitting` 布尔状态，提交前置 true，请求结束统一恢复 false
-- Candidate tasks: T1 页面状态接线；T2 按钮组件接收 disabled/loading
-- Suggested validations: checkout happy path E2E；类型检查
+- Candidate tasks: T1 按钮组件接收 disabled/loading；T2 页面状态接线
+- Task packaging notes: 把组件接口扩展与页面接线拆成两个 implement-ready `T*`，避免单个任务同时修改组件 API 与页面状态流转
+- Dependency hints: T1 -> T2
+- Suggested validations: T1 类型检查；T2 checkout happy path E2E；类型检查
 - Risks: 请求异常分支可能遗漏恢复状态
 - Feasibility: high
 - Questions requiring user input: none
@@ -70,6 +74,8 @@
 - Reusable patterns: 表单保存页已有重复点击 guard
 - Proposed execution approach: 在 handler 开头增加 `if (isSubmitting) return`
 - Candidate tasks: T3 提交 guard
+- Task packaging notes: 把 guard 与错误恢复保留为单个 `T*`，因为两者共享同一 handler 和同一错误路径验证
+- Dependency hints: T2 -> T3
 - Suggested validations: checkout duplicate-click E2E
 - Risks: 需要确认所有失败分支都能恢复状态
 - Feasibility: high

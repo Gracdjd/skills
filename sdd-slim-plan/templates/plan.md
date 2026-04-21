@@ -31,6 +31,7 @@
 - Code basis presented to user:
 - Proposed HOW presented to user:
 - Candidate tasks presented to user:
+- Task packaging / dependency notes presented to user:
 - Suggested validation presented to user:
 - User answer:
 - Final confirmed interpretation:
@@ -45,6 +46,8 @@
 - Reusable patterns:
 - Proposed execution approach:
 - Candidate tasks:
+- Task packaging notes:
+- Dependency hints:
 - Suggested validations:
 - Risks:
 - Feasibility:

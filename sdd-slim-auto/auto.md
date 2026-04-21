@@ -93,6 +93,7 @@
 - implement preflight 在 OpenCode 中应显式使用 `/compact`；在其他环境中只允许使用已文档化的等价 compaction action；如果当前环境只有自动 compaction 或完全没有该能力，不得伪造手动压缩，也不得改用 `clear` / reset / new session
 - 只实现已确认的 `T*`
 - 默认沿用 implement 的 subagent-per-T 模型：以单个 `T*` 作为实现包，由主 agent 委派一个 subagent 处理，`P*` 只保留为来源点与聚合维度
+- 如果 `Task Checklist` 已声明 `Dependencies`，implement 阶段必须先按依赖拓扑推进；只有依赖已满足且其余边界独立的 `T*` 才能进入并行
 - 如果检测到 `--mutiAgent` 或用户明确要求开启多个 agent / subagent 并行实现，implement 阶段必须由主 agent 直接做独立性判断；只有确认独立后才允许并行处理多个 `T*` 实现包，否则自动退回串行
 - auto 只负责阶段编排，不改变 implement 内部职责分工：主 agent 仍必须保留审核结果、回写 `worklog.md`、同步 `spec.md` 状态、判定 deviation / blocker、重算剩余 `T*` 与派生 `P*`、决定 `[x] / [~] / blocked` 的职责
 - 如果 subagent 返回结果不足以支撑当前 `T*` 的完成判定，必须留在 implement 阶段，由主 agent 重新派发同一 `T*`、收紧边界后再派发，或记录 blocker；不得因为 auto 链路而直接推进到 review，也不得改由主 agent 直接实现该 `T*`

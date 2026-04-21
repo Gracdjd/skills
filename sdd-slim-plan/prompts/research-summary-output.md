@@ -10,6 +10,8 @@ Use this when writing one explored `P*` back into the spec.
 - Reusable patterns: <...>
 - Proposed execution approach: <HOW>
 - Candidate tasks: <T1, T2...>
+- Task packaging notes: <why these T\* are split this way>
+- Dependency hints: <T1 -> T2 | none>
 - Suggested validations: <...>
 - Risks: <...>
 - Feasibility: high | medium | low

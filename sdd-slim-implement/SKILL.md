@@ -31,11 +31,12 @@ user-invocable: true
 - 如果当前环境既没有显式 compaction action，也没有可确认的自动 compaction 机制，必须明确说明“未进行上下文压缩”，然后重新读取 `spec.md`、`plan.md`、`worklog.md` 与当前代码继续 implement
 - 标准 implement 阶段禁止用 `askquestion` 打断用户；遇到歧义、缺口或多候选目标时，必须自主做最保守决策并记录依据
 - 实现必须把 `spec.md` 当作唯一执行边界，把 `plan.md` 当作 HOW / 风险上下文，把 `worklog.md` 当作唯一进度账本：只实现已确认 `T*`，不得因为“顺手修一下”“先跑通主链路”而扩 scope
+- 若 `worklog.md` 的 `Task Checklist` 已声明 `Dependencies`，implement 必须先按依赖拓扑推进；只有依赖已满足的 `T*` 才允许进入当前轮派发
 - 默认且强制采用 subagent-per-T：每个未完成 `T*` 都必须先交给一个 subagent；主 agent 只负责选择当前 `T*` 包边界、下发约束、审核结果、决定是否接受
 - subagent 默认只应处理单个 `T*`，并把 `P*` 只当作来源上下文；不得同时承担多个未完成 `T*` 的跨任务编排
 - 主 agent 不得直接承担任何属于当前 `T*` 的产品代码实现；如果 subagent 结果不足，必须继续重派同一 `T*` 或记录 blocker，而不是主 agent 直接下场补实现
 - 默认是单 agent 串行实现；如果用户消息中带有 `--mutiAgent`，或明确表达“开启多个 agent / 多个 subagent 并行实现”，主 agent 必须自行判定是否可安全并行：可并行就直接开启，不可并行就自动降级为串行并记录原因
-- multiAgent 模式只允许并行执行彼此独立的 `T*` 实现包；同一个 `P*` 下的多个 `T*` 只有在主 agent 明确确认文件边界、顺序依赖、公共接口和验证环境都独立时才允许并行，否则退回串行
+- multiAgent 模式只允许并行执行彼此独立且依赖已满足的 `T*` 实现包；同一个 `P*` 下的多个 `T*` 只有在主 agent 明确确认文件边界、顺序依赖、公共接口和验证环境都独立时才允许并行，否则退回串行
 - 若多个 `T*` 共享同一关键文件、迁移顺序、公共接口或验证环境，主 agent 必须判定其不独立并退回串行模式
 - 主 agent 不得把 spec 状态管理、任务完成判定、deviation / blocker 认定完全外包给 subagent
 - 每完成一个 `T*`，都必须由主 agent 立即回写 `worklog.md` 中的 `Task Checklist` 与 `Execution Notes`，并在需要时同步 `spec.md` 状态；不得拖到一组任务或一个来源点全部代码写完后再统一补记

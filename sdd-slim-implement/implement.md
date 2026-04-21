@@ -31,12 +31,13 @@
 - 如果存在多个候选 `spec.md` 且用户未指定，主 agent 必须自动选择当前请求最相关的那个，并把选择依据写入 `worklog.md` 的 `Execution Notes`
 - 如果 `spec.md` 状态不是 `ready` / `in-progress` / `implemented-with-issues`，直接记录 blocker 并停止
 - 只执行已确认的 `T*`；禁止静默扩 scope
+- 若 `worklog.md` 的 `Task Checklist` 已声明 `Dependencies`，主 agent 必须先按依赖拓扑推进；只有依赖已满足的 `T*` 才允许进入当前轮派发
 - 默认且强制采用 subagent-per-T：每个未完成 `T*` 都必须先交给一个 subagent；`P*` 只保留为来源点和主 agent 的聚合视图，主 agent 负责最终审核与状态裁定
 - 主 agent 必须保留以下职责，不能外包：artifact set 事实来源确认、任务顺序推进、`worklog.md` 回写、deviation / blocker 判定、最终完成判定、`spec.md` 状态同步
 - subagent 一次只处理一个当前 `T*`；若需要跨多个 `T*` 或跨多个 `P*` 协调，必须拆回主 agent 编排
 - 主 agent 不得直接承担当前 `T*` 的产品代码实现；如果 subagent 结果不足，必须继续重派该 `T*`、收紧该 `T*` 的实现边界后再次派发，或记录 blocker
 - 默认模式是串行：按 `T*` 逐个实现；如果检测到 `--mutiAgent` 或用户明确要求开启多个 agent / subagent 并行实现，主 agent 必须直接做独立性判断；只有确认为独立实现包时才开启 multiAgent，否则自动退回串行并记录原因
-- multiAgent 模式下，只允许并行处理彼此独立的 `T*` 实现包；同一个 `P*` 下的多个 `T*` 并行不是默认权利，只有在主 agent 明确确认无共享关键文件、无顺序依赖、无公共接口耦合、无测试环境冲突时才允许
+- multiAgent 模式下，只允许并行处理彼此独立且依赖已满足的 `T*` 实现包；同一个 `P*` 下的多个 `T*` 并行不是默认权利，只有在主 agent 明确确认无共享关键文件、无顺序依赖、无公共接口耦合、无测试环境冲突时才允许
 - 若多个 `T*` 共享关键文件、公共接口、迁移顺序、测试环境或明显存在合并冲突风险，必须判定为不独立并退回串行模式
 - 实现过程中，`worklog.md` 必须持续保持与当前真实进度同步；代码进度不得领先于文档回写超过当前正在执行的一个 `T*` 包增量
 - 在当前 `T*` 执行过程中，每完成一个 `T*` 后，必须先回写 `worklog.md`，再继续下一个 `T*`
@@ -90,18 +91,19 @@
 ### 步骤 3：开始实现
 
 1. 把 `spec.md` 状态改为 `in-progress`
-2. 从 `worklog.md` 的 `Task Checklist` 读取所有未完成任务，形成“全部剩余未完成 `T*` 队列”，同时保留每个 `T*` 的 `Source: P*` 映射，供主 agent 聚合进度与 stop condition 使用
-3. 如果存在任何未完成 `T*` 缺少 `Source: P*`，或存在任何仍在 scope 内的 `P*` 没有关联 `T*`，视为 artifact set 不一致：记录 blocker 并停止
+2. 从 `worklog.md` 的 `Task Checklist` 读取所有未完成任务，形成“全部剩余未完成 `T*` 队列”，同时保留每个 `T*` 的 `Source: P*` 与 `Dependencies` 映射，供主 agent 聚合进度、排序与 stop condition 使用
+3. 如果存在任何未完成 `T*` 缺少 `Source: P*`、引用不存在或自循环的 `Dependencies`，或存在任何仍在 scope 内的 `P*` 没有关联 `T*`，视为 artifact set 不一致：记录 blocker 并停止
 4. 检查是否命中 multiAgent 触发条件：
    - 用户消息显式包含 `--mutiAgent`
    - 用户明确表达“开启多个 agent / 多个 subagent / 并行实现多个实现包”之类的并行实现意图
-5. 若未命中，严格按 `T*` 顺序执行；当前 `T*` 自身就是一个实现包，并且该包必须先委派给 subagent
-6. 若命中，则主 agent 直接判断这些 `P*` 是否彼此独立：
+5. 若未命中，严格按依赖拓扑执行；若某个 `T*` 未声明 `Dependencies`，才按 checklist 顺序作为 fallback；当前 `T*` 自身就是一个实现包，并且该包必须先委派给 subagent
+6. 若命中，则主 agent 直接判断当前依赖已满足的这些 `T*` 是否彼此独立：
    - 若独立，进入 multiAgent 模式
    - 若不独立，退回串行模式，并在 `Execution Notes` 记录降级原因
 7. 进入 multiAgent 模式后：
-   - 先由主 agent 划分彼此独立的 `T*` 实现包
+   - 先由主 agent 从当前依赖已满足的 `T*` 中划分彼此独立的 `T*` 实现包
    - 只有独立包才允许并行调用多个 subagent 分别处理不同 `T*`
+   - 任何依赖尚未满足的 `T*` 都不得提前进入并行池
    - 主 agent 在所有相关结果返回后统一审核、去重冲突并决定哪些结果可以接收
 8. 对每个待执行的 `T*` 实现包，主 agent 都必须先按 `prompts/subagent-implementation-prompt.md` 组织约束，然后调用 subagent；不得跳过该步骤直接由主 agent 编码
 9. subagent 返回后，主 agent 必须先审核以下内容，再决定是否接受该轮实现：

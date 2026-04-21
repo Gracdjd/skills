@@ -8,8 +8,9 @@ question: |
 
   需要你确认的点：
 
-  - 并行范围：只用于独立的 repo exploration / research
+  - 并行范围：只用于彼此独立的 repo exploration / research 包（通常是单个 `P*` 或单个明确研究问题）
   - 不会并行的部分：spec 写回、`P*` 用户确认、`Q*` 澄清、最终 ready 判定仍由主 agent 串行完成
+  - 自动降级：如果研究边界重叠、共享调用链或需要串行确认，主 agent 会自动退回串行
   - 代价：可能增加 token / 资源消耗
 
   是否确认开启多个 agent 并行完成这次 plan 探索？
@@ -19,4 +20,5 @@ Rules:
 
 - 只有在检测到 `--mutiAgent` 或用户明确表示要开启多个 subagent 时才使用
 - 一次只问这一件事，不要混入其他 `Q*` 或 `P*` 确认
+- 确认开启并不代表所有 `P*` 都会并行，只代表主 agent 获得了在独立时可并行的授权
 - 只有收到明确肯定答复，才允许切换到 multiAgent 模式
