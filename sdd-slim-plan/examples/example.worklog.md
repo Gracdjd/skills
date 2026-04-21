@@ -4,6 +4,12 @@
 > Spec File: `.sdd-slim/2026.04.06.checkout-button-loading-state/spec.md`
 > Plan File: `.sdd-slim/2026.04.06.checkout-button-loading-state/plan.md`
 
+## File Role
+
+- This file is the task and execution ledger.
+- `T*` packages are derived from confirmed `P*` work in `plan.md`.
+- Feature contract stays in `spec.md`; repo evidence stays in `plan.md`.
+
 ## 1. Task Checklist
 
 - [ ] T1: 让提交按钮接收 loading / disabled 状态

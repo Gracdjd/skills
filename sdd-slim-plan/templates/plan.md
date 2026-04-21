@@ -5,12 +5,21 @@
 > Requirement Archive: `.sdd-slim/<YYYY.MM.DD>.<feature-name>/requirement.md`
 > Worklog File: `.sdd-slim/<YYYY.MM.DD>.<feature-name>/worklog.md`
 
+## File Role
+
+- This file is the planning derivation and decision trail.
+- Record how the requirement was split, what the repo evidence says, which HOW was proposed, and what still needs confirmation.
+- Do not copy `spec.md` in full here; repeat only the minimum contract context needed to explain a planning decision.
+- Do not track `T*` execution progress, review output, or final harness results here; that belongs in `worklog.md`.
+
 ## 1. Requirement Breakdown
 
 | ID  | Type          | Title | Current Understanding | Source | Status  |
 | --- | ------------- | ----- | --------------------- | ------ | ------- |
 | P1  | requirement   | ...   | ...                   | ...    | draft   |
 | Q1  | clarification | ...   | ...                   | ...    | pending |
+
+> Use this section to decompose the requirement into `P*` / `Q*`, not to restate the whole scope or acceptance text verbatim.
 
 ## 2. Clarification Log
 
@@ -72,3 +81,5 @@
 - Suggested test files: <path/a.spec.ts, path/b.test.tsx | none>
 - Shared fixtures / data setup: <... | none>
 - Review-stage generation notes: <what review should materialize into executable tests>
+
+> Translate `spec.md` verification policy into review-ready test design here. Do not duplicate the full `Verification Strategy` block.

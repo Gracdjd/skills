@@ -13,11 +13,19 @@
 > Canonical File: `.sdd-slim/<YYYY.MM.DD>.<feature-name>/spec.md`
 > Dedup Notes: none | <deduped repeated link / repeated pasted block / conflict retained>
 
+## File Role
+
+- This file is the canonical feature contract.
+- Keep only confirmed user-facing commitments, acceptance gates, and verification policy here.
+- If content mainly explains repo evidence, implementation HOW, or open decision-making, it belongs in `plan.md`.
+- If content mainly tracks `T*` progress, implementation evidence, review findings, or harness output, it belongs in `worklog.md`.
+
 ## 1. Requirement Summary
 
 - ...
 
 > If `Requirement Availability` is `partial` or `missing`, this section should only summarize known metadata and confirmed facts. Do not invent missing requirement body.
+> Keep this as a compressed contract summary, not a `P*` / `Q*` replay.
 
 ## 2. Confirmed Scope
 
@@ -32,6 +40,8 @@
 ## 3. Acceptance Criteria
 
 - [ ] ...
+
+> Keep only final feature acceptance here. Task decomposition belongs in `worklog.md`.
 
 ## 4. Verification Strategy
 
@@ -60,3 +70,5 @@
 ## 5. Risks / Follow-ups
 
 - ...
+
+> Keep risks here at feature level only. Repo evidence, task packaging risks, and unresolved research details belong in `plan.md`.

@@ -13,6 +13,12 @@
 > Canonical File: `.sdd-slim/2026.04.06.checkout-button-loading-state/spec.md`
 > Dedup Notes: none
 
+## File Role
+
+- This file is the final feature contract.
+- Final scope, acceptance, and verification live here.
+- Planning evidence and task packaging details live in `plan.md` and `worklog.md`.
+
 ## 1. Requirement Summary
 
 - 提交订单时，按钮要进入 loading 状态

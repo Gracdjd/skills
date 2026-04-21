@@ -5,12 +5,18 @@
 > Requirement Archive: `.sdd-slim/2026.04.06.checkout-button-loading-state/requirement.md`
 > Worklog File: `.sdd-slim/2026.04.06.checkout-button-loading-state/worklog.md`
 
+## File Role
+
+- This file records planning decomposition, repo evidence, and confirmed HOW.
+- Final feature contract stays in `spec.md`.
+- Task execution and review evidence stay in `worklog.md`.
+
 ## 1. Requirement Breakdown
 
 | ID  | Type          | Title              | Current Understanding                    | Source          | Status    |
 | --- | ------------- | ------------------ | ---------------------------------------- | --------------- | --------- |
-| P1  | requirement   | 提交中显示 loading | 点击提交后按钮进入 loading，直到请求结束 | 需求正文第 1 条 | confirmed |
-| P2  | requirement   | 阻止重复提交       | loading 期间再次点击无效                 | 需求正文第 2 条 | confirmed |
+| P1  | requirement   | 提交中显示 loading | checkout 提交链路需要显式按钮状态流转    | 需求正文第 1 条 | confirmed |
+| P2  | requirement   | 阻止重复提交       | duplicate submit 需要在 handler 与按钮态双层成立 | 需求正文第 2 条 | confirmed |
 | Q1  | clarification | 错误提示文案       | 失败时展示固定 toast 文案                | 需求正文第 3 条 | resolved  |
 
 ## 2. Clarification Log
@@ -88,3 +94,25 @@
 ## 6. Coherence Notes
 
 - Reserved for final planning coherence check
+
+## 7. Test Design Handoff
+
+### P1 提交中显示 loading
+
+- Required lane: e2e
+- Supporting lanes: unit
+- Unit cases: U1 `SubmitButton` 接收 `loading` / `disabled` props 时渲染禁用态；U2 checkout submit handler 在请求开始与结束时切换 `isSubmitting`
+- E2E journeys: J1 点击提交后按钮立即进入 loading，直到请求结束恢复
+- Suggested test files: `src/pages/checkout/__tests__/submit-button.test.tsx`, `tests/checkout-submit.spec.ts`
+- Shared fixtures / data setup: checkout submit mock response fixtures
+- Review-stage generation notes: 组件态用 unit 固定，浏览器主链路用 e2e 承担 release gate
+
+### P2 阻止重复提交
+
+- Required lane: e2e
+- Supporting lanes: unit
+- Unit cases: U3 submit handler 在 `isSubmitting = true` 时短路返回；U4 error recovery 分支恢复 `isSubmitting`
+- E2E journeys: J2 loading 期间重复点击被拦截；J3 失败后按钮恢复并展示错误提示
+- Suggested test files: `src/pages/checkout/__tests__/submit-button.test.tsx`, `tests/checkout-submit.spec.ts`
+- Shared fixtures / data setup: checkout submit mock response fixtures
+- Review-stage generation notes: 把 duplicate guard 与 error recovery 放到同一个失败路径 spec，避免拆成两个互相重复的浏览器 journey

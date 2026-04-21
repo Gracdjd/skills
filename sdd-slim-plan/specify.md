@@ -11,12 +11,20 @@
 本流程不再把所有 planning / execution 信息塞进单个 spec 文件，而是维护一组 canonical artifacts：
 
 - `requirement.md`：主代理归档后的 canonical 需求来源
-- `spec.md`：薄的 spec 入口文件，只放 what / why / acceptance / verification / high-level risks
-- `plan.md`：planning 明细，承载 `Requirement Breakdown`、`Clarification Log`、`Point Confirmation Log`、`Research Findings`、`Pending User Input`、`Coherence Notes`、`Test Design Handoff`
-- `worklog.md`：执行工作账本；planning 阶段只写 `Task Checklist`，implement / review 再继续回写 `Execution Notes`、`Review Findings`、`Repair Notes`、`Verification Harness Report`
+- `spec.md`：薄的 spec 合同文件，只放最终确认后的 what / why / acceptance / verification / feature-level risks
+- `plan.md`：planning 推导文件，承载 `Requirement Breakdown`、`Clarification Log`、`Point Confirmation Log`、`Research Findings`、`Pending User Input`、`Coherence Notes`、`Test Design Handoff`
+- `worklog.md`：执行工作账本；planning 阶段只写 implement-ready `Task Checklist`，implement / review 再继续回写 `Execution Notes`、`Review Findings`、`Repair Notes`、`Verification Harness Report`
 - `.sdd-slim/_project/test.md`：项目级持久回归基线，记录每个需求收尾时都要重跑的 suite / journey / coverage policy
 
 实现、review 与 final harness 之后优先回写 `worklog.md`，不是把所有痕迹继续堆进 `spec.md`。
+
+## 跨文件去重规则（CRITICAL）
+
+- 同一事实若涉及多个文件，按 `spec.md = contract`、`plan.md = derivation`、`worklog.md = execution ledger` 归位
+- `spec.md` 只保留最终确认后的用户承诺与验证 gate；不要把 `Clarification Log`、`Point Confirmation Log`、`Research Findings`、候选任务拆分全文抄进去
+- `plan.md` 只保留拆分、澄清、代码依据、HOW、风险判断与测试设计交接；不要把 `Confirmed Scope`、`Acceptance Criteria`、`Verification Strategy` 原样全文再复制一遍
+- `worklog.md` 只保留 `T*` 任务与后续执行 / 审查 / 验证痕迹；不要回抄 `P*` / `Q*` 推导过程
+- 若某条信息只是为了追溯来源，优先短引用另一个 artifact 的对应 section，而不是再复制一份正文
 
 ## HARD GATES
 
@@ -122,9 +130,9 @@ prompt 模板见 `prompts/requirement-archive-prompt.md`。
    - 后续所有引用都使用该 folder 下的 `requirement.md`、`spec.md`、`plan.md`、`worklog.md`
 4. 如果不存在目标 feature folder，则创建它，并用 `templates/spec.md`、`templates/plan.md`、`templates/worklog.md` 初始化骨架
 5. planning 阶段对各文件的职责固定如下：
-   - `spec.md`：Requirement Summary、Confirmed Scope、Acceptance Criteria、Verification Strategy、Risks / Follow-ups
-   - `plan.md`：Requirement Breakdown、Clarification Log、Point Confirmation Log、Research Findings、Pending User Input、Coherence Notes
-   - `worklog.md`：Task Checklist
+   - `spec.md`：feature contract；承载 Requirement Summary、Confirmed Scope、Acceptance Criteria、Verification Strategy、Risks / Follow-ups
+   - `plan.md`：planning derivation；承载 Requirement Breakdown、Clarification Log、Point Confirmation Log、Research Findings、Pending User Input、Coherence Notes、Test Design Handoff
+   - `worklog.md`：execution ledger；承载 implement-ready Task Checklist 与后续执行 / review / harness 痕迹
 
 ### 步骤 3：拆分需求
 
@@ -140,6 +148,8 @@ prompt 模板见 `prompts/requirement-archive-prompt.md`。
 - 普通短需求也至少形成 `P1`
 - 只要当前信息不足以形成稳定执行路径，就写成 `Q*`
 - 如果 requirement availability 不是 `available`，则不得进入本步骤
+- `spec.md` 的 `Requirement Summary` 必须是压缩后的最终需求摘要，不按 `P*` / `Q*` 原样重写
+- `plan.md` 的 `Requirement Breakdown` 用于拆分需求与记录未知项，不重复 `Confirmed Scope` / `Acceptance Criteria` 的完整文本
 
 ### 步骤 4：先逐个关闭基础 `Q*`
 
@@ -236,6 +246,8 @@ multiAgent 模式下的补充规则：
 - 候选 e2e journeys
 - 建议测试文件落点
 - 供 review 阶段直接生成测试用例的注意事项
+
+`Test Design Handoff` 的职责是把 `Verification Strategy` 翻译成 review 阶段可落地的测试设计，不应再复制 feature-level `Verification Strategy` 的完整原文。
 
 生成规则：
 
