@@ -1,10 +1,11 @@
 # SDD Slim Auto — End-to-End Orchestration
 
 > 输入：需求文档链接 / 需求正文 / bug 描述 / 重构诉求 / 已存在的 feature folder 入口 `spec.md`
-> 输出：以下二者之一
+> 输出：以下三者之一
 >
-> 1. 当前阶段的第一个阻塞问题
-> 2. 已完成的 `plan => implement => review` 结果
+> 1. plan 阶段当前的第一个阻塞问题
+> 2. implement / review 阶段的 blocker summary
+> 3. 已完成的 `plan => implement => review` 结果
 
 ## 目标
 
@@ -148,7 +149,26 @@
 
 然后停止，等待用户回答。
 
-### B. 自动链路完整跑完时
+### B. 因 blocker 收口时
+
+只适用于 implement / review 阶段。
+
+至少输出：
+
+- 当前阶段
+- requirement archive 路径（如已存在）
+- spec 路径（如已存在）
+- plan 路径（如已存在）
+- worklog 路径（如已存在）
+- 当前状态
+- blocker summary
+- attempted conservative path
+- missing decision / input / dependency（如有）
+- 为什么本轮不能安全继续
+
+然后停止；本轮不等待用户当场澄清，也不自动跳阶段。
+
+### C. 自动链路完整跑完时
 
 至少输出：
 
