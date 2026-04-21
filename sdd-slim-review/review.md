@@ -1,7 +1,7 @@
-# SDD Slim Review — Review, Repair, And Verification Harness
+# SDD Slim Review — Review, Test Generation, Repair, And Verification Harness
 
 > 输入：实现后的代码 + 相关 feature artifact set
-> 输出：review findings + 对 actionable findings 的直接修复结果 + verification harness report
+> 输出：review findings + review 阶段生成的 unit / e2e tests + 对 actionable findings 的直接修复结果 + verification harness report
 
 ## 多文档回写策略（CRITICAL）
 
@@ -13,11 +13,13 @@
 ## HARD GATES
 
 - 只能由用户显式触发 `sdd-slim-review`
-- review 顺序必须是：spec 合规 → bug / 质量 / 回归风险 → 直接修复 actionable findings → final verification harness
-- review、repair 与 final verification harness 都必须由 subagent 驱动；主 agent 不得直接承担产品代码修复，也不得跳过 final harness 直接收尾
+- review 顺序必须是：spec 合规 → bug / 质量 / 回归风险 → 生成 / 更新 executable tests → 直接修复 actionable findings → final verification harness
+- review、test generation、repair 与 final verification harness 都必须由 subagent 驱动；主 agent 不得直接承担产品代码修复，也不得跳过 final harness 直接收尾
 - 必须读取并遵循 `harness.md`
-- 如果目标涉及 web / browser UI，required harness 必须是 `e2e`，并且必须使用 agent-browser 做自动化验证；开始前先加载 agent-browser skill，并按其要求执行 `agent-browser skills get agent-browser`
+- 必须读取 `plan.md` 中的 `Test Design Handoff`；plan 负责定义“测什么”，review 负责把它落成真实测试文件
+- 如果目标涉及 web / browser UI，required harness 必须是 `e2e`，并且必须优先使用 Playwright MCP 浏览器工具链做自动化验证：先启用浏览器交互工具组，按需补充表单/文件与页面捕获工具组；不得依赖外部 browser skill stub 作为前置条件
 - 如果目标不涉及 web / browser UI，required harness 必须是 `unit`，并尽量用 coverage-enabled 的项目原生 unit test command 做 deterministic 验证
+- 如果 `Test Design Handoff` 已声明 supporting lane，review 必须尽量一并生成该 lane 的测试文件；只有在明确 blocker 下才允许留空
 - 每次需求收尾都必须对照 `.sdd-slim/_project/test.md` 执行项目级回归基线，除非明确 `blocked` 或 `skipped`
 - 如果目标 spec / review 范围不明确，不得用 `askquestion` 打断用户；主 agent 必须基于当前请求、diff、artifact set 与 harness 约束自动选择最相关范围，并在 `worklog.md` 中记录依据
 - 不得自动进入任何其他 skill
@@ -49,7 +51,7 @@
 
 如果目标涉及 web / browser UI，额外准备：
 
-- agent-browser skill
+- Playwright MCP 浏览器工具链（浏览器交互；必要时再加表单/文件、页面捕获）
 - 关键用户路径列表
 - 需要复现或验证的交互行为
 
@@ -57,14 +59,16 @@
 
 - `harness.md`
 - `spec.md` 中已有的 `Verification Strategy`
+- `plan.md` 中已有的 `Test Design Handoff`
 
 ### 3. 切分 subagent 包
 
 - review 包：默认按 `P*`、文件簇、或明确的风险域逐个切分
+- test generation 包：默认按 `TG*` 逐个切分；每个包只落一个明确的 unit suite 或 e2e journey cluster
 - repair 包：默认按 `R*` 逐个切分
 - harness 包：默认收敛为一个 final verification harness 包，由主 agent 串行汇总结果
 - 默认串行；如果检测到 `--mutiAgent` 或用户明确要求并行，主 agent 必须直接判断是否开启并行
-- 只有确认彼此独立时，才允许对 review 包或 `R*` repair 包并行派发 subagent；否则自动退回串行，并把原因写入 `Repair Notes` 或 `Review Findings`
+- 只有确认彼此独立时，才允许对 review 包、`TG*` test generation 包或 `R*` repair 包并行派发 subagent；否则自动退回串行，并把原因写入 `Repair Notes` 或 `Review Findings`
 
 ## 两阶段审查
 
@@ -91,11 +95,12 @@
 
 如果目标涉及 web / browser UI：
 
-- 必须优先使用 agent-browser 做自动化探索、复现与验证
-- 开始前先加载 agent-browser skill，并按其要求执行 `agent-browser skills get agent-browser`
+- 必须优先使用 Playwright MCP 做自动化探索、复现与验证
+- 开始前先启用浏览器交互工具组；遇到表单填写、文件上传下载时启用表单/文件工具组；需要截图、快照或可访问性证据时启用页面捕获工具组
 - 优先覆盖关键路径、当前改动影响路径以及与 findings 直接相关的交互
-- 如果仓库已有 Playwright / Cypress 等 E2E suite，优先把它作为可重复的 harness 执行入口；agent-browser 仍要用于关键路径复现、补洞验证或 artifact 捕获
-- 如果当前环境无法使用 agent-browser，必须把该限制写入 `worklog.md` 的 `Review Findings` 范围或 blocker，不能把 web 路径宣称为已充分审查，也不能把 e2e harness 宣称为已完整执行
+- 如果仓库已有 Playwright / Cypress 等 E2E suite，review 仍应把仓库内测试文件当作可持续回归资产维护；但 agent 侧的默认执行入口仍是 Playwright MCP，项目命令只作为 CI 或显式回归复跑的次级路径
+- 不得把 raw CLI e2e 复跑当成默认或唯一的 agent 侧验证证据
+- 如果当前环境无法使用 Playwright MCP，必须把该限制写入 `worklog.md` 的 `Review Findings` 范围或 blocker；只有当 spec 或项目级基线明确允许“项目命令兜底”时，才可退回仓库原生命令，否则不能把 web 路径宣称为已充分审查，也不能把 e2e harness 宣称为已完整执行
 
 ## Findings 处理规则
 
@@ -120,11 +125,36 @@
 - Suggested validation
 - Fix status
 
+如果某个 finding 的本质是“缺少 deterministic unit / e2e coverage”或“现有测试未覆盖验收面”，必须把它保留为 finding，同时在后续 `Generated Tests` 中创建对应 `TG*` 包来落地测试。
+
 `Fix status` 只允许：
 
 - `open`
 - `fixed`
 - `deferred`
+
+## Test Generation Flow（CRITICAL）
+
+review 阶段必须把 `plan.md` 的 `Test Design Handoff` 落成最终可执行测试；这一步不是建议，而是 review 的正式产物。
+
+规则：
+
+- plan 只定义测试设计，review 负责生成或更新真实测试文件
+- 对 `web` 目标，至少要落地 required e2e lane；如果 handoff 中声明了 supporting `unit` lane，review 也必须尽量一并生成
+- 对 web 目标，默认优先生成仓库内的 Playwright 测试文件作为长期回归资产；只有仓库已明确采用其他 e2e 框架时才沿用既有框架
+- 对 `non-web` 目标，至少要落地 required unit lane；只有在 handoff 中明确声明 browser journey 时才生成 e2e
+- 对 `mixed` 目标，review 必须同时检查 unit 与 e2e 的 handoff；未落地的 lane 必须写清 blocker
+- 每个待生成的测试包都要编号为 `TG1`、`TG2` ...，并记录其覆盖的 unit cases 或 e2e journeys
+- Playwright MCP 负责 agent 侧浏览器执行；生成出的 Playwright 测试文件负责仓库内长期沉淀，这两者不得混为同一种产物
+- 生成的测试必须在 final harness 前至少完成一次定向执行；如果当前仓库只新增了持久化的 Playwright 测试文件而未执行项目命令，也必须至少用 Playwright MCP 覆盖对应 journey；如果两者都无法完成，必须记录 blocker
+
+每个 `TG*` 至少记录：
+
+- lane（`unit` / `e2e`）
+- 覆盖对象（unit cases / journeys）
+- 生成或更新的测试文件
+- 立即执行的定向验证
+- 仍未覆盖的缺口（如有）
 
 ## Repair Flow（CRITICAL）
 
@@ -181,9 +211,10 @@
 
 - Review 范围
 - Findings 列表
+- Generated Tests 列表
 - Actionable findings（供同阶段 immediate repair 消费）
 - 已运行的验证
-- agent-browser 自动化验证（如适用）
+- Playwright MCP 自动化验证（如适用）
 - Verification Harness Report
 - 仍需用户决定的 blocker（如有）
 
@@ -206,6 +237,7 @@
 只报告关键结果：
 
 - issues found
+- generated tests
 - actionable findings
 - severities
 - validations run
@@ -224,4 +256,4 @@
 - 目标范围不清时，自动选择最相关的 feature folder，并记录选择依据
 - finding 成功标准不够清楚时，按 `spec.md`、`Acceptance Criteria`、`Verification Strategy` 与实际代码行为取最保守解释
 - 无法安全修复的 finding 标记为 `deferred` 或 `blocked`，但本轮 review 仍必须继续完成其余 review、repair 与 final harness 收口
-- agent-browser、project regression 或 required harness 无法执行时，不等待用户回复；直接把对应 lane 标成 `blocked` 或 `skipped`，给出 grounded 原因，并以最终 verdict 收口
+- Playwright MCP、project regression 或 required harness 无法执行时，不等待用户回复；直接把对应 lane 标成 `blocked` 或 `skipped`，给出 grounded 原因，并以最终 verdict 收口

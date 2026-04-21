@@ -18,8 +18,9 @@
 - 不修改 `sdd-slim-plan` / `sdd-slim-implement` / `sdd-slim-review` 的任何定义、模板、提问方式或停止条件
 - 不通过弱化 gate 来实现自动化；只改变下一阶段的触发方式
 - `sdd-slim-plan` 阶段的 `Q*` 提问、`P*` 确认、默认串行 subagent 探索，以及在检测到 `--mutiAgent` 或用户明确要求后先经 `askquestion` 确认再切换 multiAgent 并行探索的规则，必须完整保留
-- `sdd-slim-implement` 阶段的 context-compression preflight、只实现已确认 `T*`、subagent-per-P 执行模型、主 agent 审核与 `worklog.md` 回写职责、剩余 `P*` 重算与阻塞时停止，必须完整保留；但 implement 阶段不得通过提问暂停用户，所有额外判断都要在本轮内自动收口
+- `sdd-slim-implement` 阶段的 context-compression preflight、只实现已确认 `T*`、subagent-per-T 执行模型、主 agent 审核与 `worklog.md` 回写职责、剩余 `T*` 与派生 `P*` 重算与阻塞时停止，必须完整保留；但 implement 阶段不得通过提问暂停用户，所有额外判断都要在本轮内自动收口
 - `sdd-slim-review` 阶段的 subagent review + immediate repair、主 agent 审核与 `worklog.md` 回写职责必须完整保留；但 review 阶段不得通过提问暂停用户，所有额外判断都要在本轮内自动收口
+- `sdd-slim-review` 阶段在 final harness 前必须先把 `plan.md` 中的 `Test Design Handoff` 落地为真实的 unit / e2e 测试文件；plan 只定义测试设计，不生成最终测试代码
 - `sdd-slim-review` 阶段中的 verification harness 规则必须完整保留：web / browser UI 走 `e2e`，其他目标走 `unit`，每次收尾都要执行 `.sdd-slim/_project/test.md` 中的项目级回归基线，报告里必须同时出现 unit coverage 与 e2e success rate 字段
 - `sdd-slim-plan` 若缺失任一 `P*` 的 subagent 研究或用户确认，禁止自动进入 implement
 - `sdd-slim-plan` 若任何代码库 exploration 不是由 subagent 完成，也禁止自动进入 implement
@@ -91,33 +92,35 @@
 - 在进入实现前，仍必须执行 context-compression preflight
 - implement preflight 在 OpenCode 中应显式使用 `/compact`；在其他环境中只允许使用已文档化的等价 compaction action；如果当前环境只有自动 compaction 或完全没有该能力，不得伪造手动压缩，也不得改用 `clear` / reset / new session
 - 只实现已确认的 `T*`
-- 默认沿用 implement 的 subagent-per-P 模型：以单个 `P*` 作为实现包，由主 agent 委派一个 subagent 处理该 `P*` 下关联的多个 `T*`
-- 如果检测到 `--mutiAgent` 或用户明确要求开启多个 agent / subagent 并行实现，implement 阶段必须由主 agent 直接做独立性判断；只有确认独立后才允许并行处理多个 `P*` 实现包，否则自动退回串行
-- auto 只负责阶段编排，不改变 implement 内部职责分工：主 agent 仍必须保留审核结果、回写 `worklog.md`、同步 `spec.md` 状态、判定 deviation / blocker、重算剩余 `P*`、决定 `[x] / [~] / blocked` 的职责
-- 如果 subagent 返回结果不足以支撑当前 `P*` 包内各个 `T*` 的完成判定，必须留在 implement 阶段，由主 agent 重新派发同一 `P*`、缩小边界后再派发，或记录 blocker；不得因为 auto 链路而直接推进到 review，也不得改由主 agent 直接实现该 `P*`
+- 默认沿用 implement 的 subagent-per-T 模型：以单个 `T*` 作为实现包，由主 agent 委派一个 subagent 处理，`P*` 只保留为来源点与聚合维度
+- 如果检测到 `--mutiAgent` 或用户明确要求开启多个 agent / subagent 并行实现，implement 阶段必须由主 agent 直接做独立性判断；只有确认独立后才允许并行处理多个 `T*` 实现包，否则自动退回串行
+- auto 只负责阶段编排，不改变 implement 内部职责分工：主 agent 仍必须保留审核结果、回写 `worklog.md`、同步 `spec.md` 状态、判定 deviation / blocker、重算剩余 `T*` 与派生 `P*`、决定 `[x] / [~] / blocked` 的职责
+- 如果 subagent 返回结果不足以支撑当前 `T*` 的完成判定，必须留在 implement 阶段，由主 agent 重新派发同一 `T*`、收紧边界后再派发，或记录 blocker；不得因为 auto 链路而直接推进到 review，也不得改由主 agent 直接实现该 `T*`
 - 如果 implement 因歧义、缺少输入或越界风险而阻塞，必须在本轮内选择最保守实现路径；只有当任何保守路径都不安全时，才写 blocker note 并以 implement 终态收口，不等待用户
-- 只有在全部剩余未完成 `P*` 已被处理到终态后，implement 才能达到 `implemented` 或 `implemented-with-issues`；此时不询问是否继续 review，直接进入阶段 3
+- 只有在全部剩余未完成 `T*` 已被处理到终态，且全部 `P*` 已被派生聚合到终态后，implement 才能达到 `implemented` 或 `implemented-with-issues`；此时不询问是否继续 review，直接进入阶段 3
 
 ## 阶段 3：Review
 
-执行方式：严格遵循 `../sdd-slim-review/review.md`；该阶段内部先 review，再直接 repair actionable findings，最后运行 final verification harness。
+执行方式：严格遵循 `../sdd-slim-review/review.md`；该阶段内部先 review，再生成 / 更新 unit / e2e tests，再直接 repair actionable findings，最后运行 final verification harness。
 
 额外编排要求：
 
 - 把用户对 `sdd-slim-auto` 的显式触发，视为对 review 阶段内“审查 + 直接修复”闭环的一次性授权
 - 把用户对 `sdd-slim-auto` 的显式触发，也视为对 review 阶段内 final verification harness 的一次性授权
 - 如果当前目标涉及 web / browser UI：
-  - review、repair 与 e2e harness 都必须优先使用 agent-browser 做自动化验证
-  - 开始前必须先加载 agent-browser skill，并按其要求先执行 `agent-browser skills get agent-browser`
-  - 不得用内置浏览器工具或纯肉眼检查替代 agent-browser
+  - review、repair 与 e2e harness 都必须优先使用 Playwright MCP 浏览器工具链做自动化验证
+  - 开始前先启用浏览器交互工具组；遇到表单/上传再启用表单与文件工具组；需要截图/快照证据时启用页面捕获工具组
+  - 不依赖外部 browser skill stub，也不得用纯肉眼检查替代 Playwright MCP
   - required harness 必须是 `e2e`
   - 最终报告中必须给出 `E2E Success Rate`；`Unit Coverage` 若未执行则明确写 `skipped` 原因
-  - 如果当前环境无法使用 agent-browser，必须记录 blocker 并停止，不得宣称 review 或 e2e harness 完成
+  - Playwright MCP 是默认执行入口；仓库原生命令只作为 CI / 显式回归复跑的次级路径
+  - 如果当前环境无法使用 Playwright MCP，必须记录 blocker 并停止；只有当 spec 或项目基线明确允许 secondary path 兜底时，才可改为项目原生命令，不得宣称这是默认路径
 - 如果当前目标不涉及 web / browser UI：
   - required harness 必须是 `unit`
   - 最终报告中必须给出 `Unit Coverage`
   - `E2E Success Rate` 若未执行则明确写 `skipped` 原因
 - review 阶段必须由 subagent 驱动：先由 review subagent 产出 findings，再由 repair subagent 直接修复 actionable findings
+- review 阶段必须由 subagent 驱动：先由 review subagent 产出 findings，再由 test generation subagent 基于 `plan.md` 的 `Test Design Handoff` 生成或更新最终测试文件，再由 repair subagent 直接修复 actionable findings
 - final verification harness 也必须由 subagent 驱动，主 agent 负责聚合 coverage / success rate、项目级回归基线结果、回写报告与决定最终 verdict
 - 默认串行：先顺序完成 review 包，再顺序修复 `R*`
 - 如果检测到 `--mutiAgent` 或用户明确要求开启多个 subagent 并行 review / repair，主 agent 必须直接做独立性判断；只有确认独立后才允许并行处理 review 包或 `R*`，否则自动退回串行
@@ -180,7 +183,7 @@
 - 最终状态
 - changed files
 - validations run
-- agent-browser validations（如适用）
+- Playwright MCP validations（如适用）
 - unit coverage
 - e2e success rate
 - project regression result

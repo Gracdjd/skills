@@ -49,7 +49,7 @@
   - Coverage Source: coverage summary json 或终端输出
   - Minimum Signal: 仅作为补充学习信号，不替代 required e2e lane
 - E2E Harness:
-  - Tooling: agent-browser；若仓库已有 Playwright 套件，可一并复用
+  - Tooling: Playwright MCP 优先；若需要长期沉淀回归资产，则在仓库内补充 Playwright 套件，项目命令仅用于 CI 或显式复跑
   - Critical Journeys: J1 timer 开始/暂停/重置；J2 当前任务切换并在面板同步；J3 完成一轮 session 后 summary 更新
   - Minimum Signal: 所有 critical journeys pass
 - Project Regression:

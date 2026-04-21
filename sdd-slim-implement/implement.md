@@ -31,16 +31,16 @@
 - 如果存在多个候选 `spec.md` 且用户未指定，主 agent 必须自动选择当前请求最相关的那个，并把选择依据写入 `worklog.md` 的 `Execution Notes`
 - 如果 `spec.md` 状态不是 `ready` / `in-progress` / `implemented-with-issues`，直接记录 blocker 并停止
 - 只执行已确认的 `T*`；禁止静默扩 scope
-- 默认且强制采用 subagent-per-P：每个未完成 `P*` 实现包都必须先交给一个 subagent；一个实现包可覆盖该 `P*` 下多个相关 `T*`，主 agent 负责最终审核与状态裁定
+- 默认且强制采用 subagent-per-T：每个未完成 `T*` 都必须先交给一个 subagent；`P*` 只保留为来源点和主 agent 的聚合视图，主 agent 负责最终审核与状态裁定
 - 主 agent 必须保留以下职责，不能外包：artifact set 事实来源确认、任务顺序推进、`worklog.md` 回写、deviation / blocker 判定、最终完成判定、`spec.md` 状态同步
-- subagent 一次只处理一个当前 `P*` 及其关联的 `T*`；若需要跨多个 `P*` 协调，必须拆回主 agent 编排
-- 主 agent 不得直接承担当前 `P*` 包的产品代码实现；如果 subagent 结果不足，必须继续重派该 `P*`、缩小该 `P*` 的实现边界后再次派发，或记录 blocker
-- 默认模式是串行：按 `P*` 逐个实现；如果检测到 `--mutiAgent` 或用户明确要求开启多个 agent / subagent 并行实现，主 agent 必须直接做独立性判断；只有确认为独立实现包时才开启 multiAgent，否则自动退回串行并记录原因
-- multiAgent 模式下，只允许并行处理彼此独立的 `P*` 实现包；不得让多个 agent 同时改动同一个 `P*` 包
-- 若多个 `P*` 共享关键文件、公共接口、迁移顺序、测试环境或明显存在合并冲突风险，必须判定为不独立并退回串行模式
-- 实现过程中，`worklog.md` 必须持续保持与当前真实进度同步；代码进度不得领先于文档回写超过当前正在执行的一个 `P*` 包增量
-- 在当前 `P*` 包执行过程中，每完成一个 `T*` 后，必须先回写 `worklog.md`，再继续该 `P*` 包内剩余任务或进入下一个 `P*`
-- implement 的 stop condition 只能是以下两类之一：全部未完成 `P*` 均已被处理到终态，或出现无法安全继续消化的 blocker；不得因为某个 `P*` 已完成就提前结束整个 implement 阶段
+- subagent 一次只处理一个当前 `T*`；若需要跨多个 `T*` 或跨多个 `P*` 协调，必须拆回主 agent 编排
+- 主 agent 不得直接承担当前 `T*` 的产品代码实现；如果 subagent 结果不足，必须继续重派该 `T*`、收紧该 `T*` 的实现边界后再次派发，或记录 blocker
+- 默认模式是串行：按 `T*` 逐个实现；如果检测到 `--mutiAgent` 或用户明确要求开启多个 agent / subagent 并行实现，主 agent 必须直接做独立性判断；只有确认为独立实现包时才开启 multiAgent，否则自动退回串行并记录原因
+- multiAgent 模式下，只允许并行处理彼此独立的 `T*` 实现包；同一个 `P*` 下的多个 `T*` 并行不是默认权利，只有在主 agent 明确确认无共享关键文件、无顺序依赖、无公共接口耦合、无测试环境冲突时才允许
+- 若多个 `T*` 共享关键文件、公共接口、迁移顺序、测试环境或明显存在合并冲突风险，必须判定为不独立并退回串行模式
+- 实现过程中，`worklog.md` 必须持续保持与当前真实进度同步；代码进度不得领先于文档回写超过当前正在执行的一个 `T*` 包增量
+- 在当前 `T*` 执行过程中，每完成一个 `T*` 后，必须先回写 `worklog.md`，再继续下一个 `T*`
+- implement 的 stop condition 只能是以下两类之一：全部未完成 `T*` 均已被处理到终态，且所有 `P*` 已被重新聚合为终态，或出现无法安全继续消化的 blocker；不得因为某个 `P*` 或某个局部任务组已完成就提前结束整个 implement 阶段
 - 如果发现当前实现依赖文档未写明的假设、需要新增任务、或需要改动未列入 `T*` 的行为边界，必须先停下：记录 assumption / blocker / deviation，并优先按最保守路径继续；只有在任何保守路径都不安全时才允许结束 implement
 - 如果实现过程中已经发生偏离，必须先把已发生的事实补写回 `worklog.md`，必要时同步 `spec.md` 状态，再继续任何开发动作
 - 实现中出现新的歧义或缺失信息时，不得用 `askquestion` 打断用户；必须基于 `spec.md`、`plan.md`、`worklog.md` 与当前代码选择最保守解释并记录
@@ -90,33 +90,33 @@
 ### 步骤 3：开始实现
 
 1. 把 `spec.md` 状态改为 `in-progress`
-2. 从 `worklog.md` 的 `Task Checklist` 读取所有未完成任务，并按 `Source: P*` 分组，形成“全部剩余未完成 `P*` 队列”
-3. 如果仍有任一 `P*` 没有被放入队列或没有关联 `T*`，视为 artifact set 不一致：记录 blocker 并停止
+2. 从 `worklog.md` 的 `Task Checklist` 读取所有未完成任务，形成“全部剩余未完成 `T*` 队列”，同时保留每个 `T*` 的 `Source: P*` 映射，供主 agent 聚合进度与 stop condition 使用
+3. 如果存在任何未完成 `T*` 缺少 `Source: P*`，或存在任何仍在 scope 内的 `P*` 没有关联 `T*`，视为 artifact set 不一致：记录 blocker 并停止
 4. 检查是否命中 multiAgent 触发条件：
    - 用户消息显式包含 `--mutiAgent`
    - 用户明确表达“开启多个 agent / 多个 subagent / 并行实现多个实现包”之类的并行实现意图
-5. 若未命中，严格按 `P*` 顺序执行；当前 `P*` 下的多个 `T*` 视为一个实现包，并且该包必须先委派给 subagent
+5. 若未命中，严格按 `T*` 顺序执行；当前 `T*` 自身就是一个实现包，并且该包必须先委派给 subagent
 6. 若命中，则主 agent 直接判断这些 `P*` 是否彼此独立：
    - 若独立，进入 multiAgent 模式
    - 若不独立，退回串行模式，并在 `Execution Notes` 记录降级原因
 7. 进入 multiAgent 模式后：
-   - 先由主 agent 划分彼此独立的 `P*` 实现包
-   - 只有独立包才允许并行调用多个 subagent 分别处理不同 `P*`
+   - 先由主 agent 划分彼此独立的 `T*` 实现包
+   - 只有独立包才允许并行调用多个 subagent 分别处理不同 `T*`
    - 主 agent 在所有相关结果返回后统一审核、去重冲突并决定哪些结果可以接收
-8. 对每个待执行的 `P*` 实现包，主 agent 都必须先按 `prompts/subagent-implementation-prompt.md` 组织约束，然后调用 subagent；不得跳过该步骤直接由主 agent 编码
+8. 对每个待执行的 `T*` 实现包，主 agent 都必须先按 `prompts/subagent-implementation-prompt.md` 组织约束，然后调用 subagent；不得跳过该步骤直接由主 agent 编码
 9. subagent 返回后，主 agent 必须先审核以下内容，再决定是否接受该轮实现：
-   - 改动是否只覆盖当前 `P*` 及其关联 `T*`
+   - 改动是否只覆盖当前 `T*` 及其最小必要上下文
    - 是否引入 spec 外行为或隐含假设
    - 验证是否真实且足以支撑当前完成判定
    - 是否还存在需要记录的 deviation / risk / blocker
-10. 如果 subagent 返回结果不足以支撑当前 `P*` 包完成判定，主 agent 只能执行以下动作之一：
+10. 如果 subagent 返回结果不足以支撑当前 `T*` 完成判定，主 agent 只能执行以下动作之一：
 
-- 带着更严格的边界与缺口说明，重新派发同一 `P*` 给 subagent
-- 把当前 `P*` 缩小为更清晰的单个实现包后，再派发 subagent
+- 带着更严格的边界与缺口说明，重新派发同一 `T*` 给 subagent
+- 在不改变 task 边界的前提下，补充更明确的允许文件、验收和验证要求后再派发同一 `T*`
 - 记录 blocker / deviation 并停止
-- 不允许主 agent 直接补写当前 `P*` 的产品代码实现
+- 不允许主 agent 直接补写当前 `T*` 的产品代码实现
 
-11. 对当前 `P*` 包内的每个 `T*`，都必须单独判断完成状态并更新 `worklog.md`：
+11. 对当前 `T*`，都必须单独判断完成状态并更新 `worklog.md`：
 
 - `[ ]` → `[x]`：已完成且验证通过
 - `[ ]` → `[~]`：已做最小可接受实现，但仍有已知问题
@@ -130,8 +130,8 @@
 - 与原计划的偏差（如有）
 - 执行主体：`subagent` / `main-agent`
 
-13. 在继续下一个串行 `P*` 或结束一轮并行归并前，主代理必须重新读取刚写回的 `worklog.md` 与 `spec.md`，确认 checklist / execution notes 已落盘且与当前代码状态一致，并重新计算剩余未完成 `P*`
-14. 只要仍存在未处理完成且未阻塞的 `P*`，就必须继续进入下一轮 `P*` 派发；不得提前收尾
+13. 在继续下一个串行 `T*` 或结束一轮并行归并前，主代理必须重新读取刚写回的 `worklog.md` 与 `spec.md`，确认 checklist / execution notes 已落盘且与当前代码状态一致，并重新计算剩余未完成 `T*` 与派生的 `P*` 完成态
+14. 只要仍存在未处理完成且未阻塞的 `T*`，就必须继续进入下一轮 `T*` 派发；不得提前收尾
 
 ### 步骤 4：阻塞处理
 
@@ -152,11 +152,11 @@
 
 subagent 相关补充：
 
-- 如果 subagent 的结果无法证明其实现满足当前 `P*` 包内相关 `T*`，主 agent 不得直接接受；必须重派该 `P*`、缩小边界后重派，或记录 blocker
+- 如果 subagent 的结果无法证明其实现满足当前 `T*`，主 agent 不得直接接受；必须重派该 `T*`、补充更严格边界后重派，或记录 blocker
 - 如果 subagent 已经做出 spec 外改动，主 agent 必须先记录 deviation，再决定回退、修正或向用户澄清
-- 如果 subagent 返回的信息不足以支持 checklist 更新，则当前 `P*` 包内对应 `T*` 维持未完成
+- 如果 subagent 返回的信息不足以支持 checklist 更新，则当前 `T*` 维持未完成
 - 如果当前环境无法调用 subagent，则不能降级为主 agent 直接实现；必须记录 blocker 并停止
-- 如果 multiAgent 模式下多个 subagent 的结果存在冲突、共享依赖或交叉改动，主 agent 必须暂停继续并行接收，先退回串行编排，再按单个 `P*` 重新派发；不得自己直接修补这些 `P*` 的产品代码冲突
+- 如果 multiAgent 模式下多个 subagent 的结果存在冲突、共享依赖或交叉改动，主 agent 必须暂停继续并行接收，先退回串行编排，再按单个 `T*` 重新派发；不得自己直接修补这些 `T*` 的产品代码冲突
 
 额外规则：
 
@@ -179,13 +179,13 @@ subagent 相关补充：
 - `T*` 只有在验证结果已写入 `worklog.md` 的 `Execution Notes` 后，才能标成 `[x]`
 - 如果代码已改但验证失败 / 缺失，只能标 `[~]` 或保持未完成，并在 notes 中说明原因
 - 如果当前环境无法执行预定验证，必须把“无法验证的原因”和“未验证风险”写入 `Execution Notes`
-- 若验证由 subagent 执行，主 agent 仍需判断验证是否覆盖当前 `P*` 包内各个 `T*` 的验收要求、是否存在遗漏；必要时补跑一轮主 agent 自己的定向验证
+- 若验证由 subagent 执行，主 agent 仍需判断验证是否覆盖当前 `T*` 的验收要求、是否存在遗漏；必要时补跑一轮主 agent 自己的定向验证
 - 若采用 multiAgent 模式，主 agent 还需额外判断并行结果之间是否引入回归、覆盖顺序问题或共享文件冲突；必要时补跑一轮交叉验证
 - implement 阶段的定向验证不能替代 review 阶段的 final verification harness；feature-level 的 `unit` / `e2e` 选择、coverage、success rate 与统一测试报告仍必须在 `sdd-slim-review` 内完成
 
 ### 步骤 6：收尾
 
-- 只有在重新计算确认“全部剩余未完成 `P*` 队列已清空”后，且没有遗漏的未完成 `T*`：
+- 只有在重新计算确认“全部剩余未完成 `T*` 队列已清空”，且所有 `P*` 都已被合法聚合为终态后：
   - 全部任务都为 `[x]` 或 `[~]`
   - `spec.md` 状态改为 `implemented` 或 `implemented-with-issues`
   - 输出 changed files / validations / deviations / remaining risks
@@ -194,7 +194,7 @@ subagent 相关补充：
 ## Guardrails
 
 - 优先沿用项目现有模式
-- 不做与当前 `P*` 包无关的重构
+- 不做与当前 `T*` 无关的重构
 - 不做投机式清理
 - 涉及测试时，补最小但有价值的测试
 - 不允许把“先实现再补 spec”当作正常路径；那只能作为 deviation 被记录和纠正

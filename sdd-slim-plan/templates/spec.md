@@ -37,6 +37,7 @@
 
 - Target Surface: web | non-web | mixed
 - Required Harness: e2e | unit | hybrid
+- Supporting Lanes: unit | e2e | none
 - Project Regression:
   - Source File: `.sdd-slim/_project/test.md`
   - Run on Every Feature Close-out: yes
@@ -45,12 +46,16 @@
   - Coverage Source: <stdout / json / xml / html / none>
   - Minimum Signal: <project baseline or default 80% overall + 80% touched files>
 - E2E Harness:
-  - Tooling: <agent-browser / playwright / cypress / none>
+  - Tooling: <playwright-mcp / repo-playwright-suite / cypress / none>
   - Critical Journeys: <J1, J2 ... | none>
   - Minimum Signal: <all critical journeys pass | explicit threshold>
 - Report Requirements:
   - Unit Coverage: lines / functions / branches / statements, or explicit n/a reason
   - E2E Success Rate: passed journeys / total journeys, or explicit n/a reason
+- Review-Owned Test Generation:
+  - Source Section: `plan.md` -> `Test Design Handoff`
+  - Expected Output: executable unit / e2e tests as applicable
+  - Default E2E Split: Playwright MCP handles agent-side browser execution; repo-native Playwright tests are the preferred durable asset when long-term e2e regression is needed
 
 ## 5. Risks / Follow-ups
 

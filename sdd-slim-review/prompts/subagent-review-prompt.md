@@ -16,6 +16,7 @@ Use this when `sdd-slim-review` dispatches a single review package to a subagent
 输出要求：
 1. 仅基于当前包产出 grounded findings
 2. 为每条 actionable finding 提供 evidence、建议修复方向、建议验证方式；建议验证方式必须与 required harness 对齐
+3. 如果发现缺少 deterministic coverage，明确指出应生成的 unit cases / e2e journeys，以及建议的测试文件落点
 3. 不修改产品代码
 4. 如果信息不足，明确指出缺口或 blocker
 ```

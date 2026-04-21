@@ -14,7 +14,8 @@
 ## 2. Global E2E / Browser Suites
 
 - PT2: <suite or journey name>
-  - Command or Flow: <command / agent-browser path>
+  - Primary Flow: <Playwright MCP flow>
+  - Secondary Command: <project e2e command | none>
   - Scope: <what it protects>
   - Required on Every Feature: yes | no
   - Success Signal: <pass criteria>

@@ -25,6 +25,9 @@
   - `e2e`：`web` 必选
   - `unit`：`non-web` 必选
   - `hybrid`：只在用户明确要求，或当前 spec 已明确要求两类验证都必须成为 release gate 时使用
+- supporting lane：
+  - spec 或 `plan.md` 的 `Test Design Handoff` 中声明、由 review 阶段生成的辅助测试 lane
+  - supporting lane 不替代 required lane，但只要已生成且可运行，就应在 final harness 中一并执行
 - project regression baseline：`.sdd-slim/_project/test.md` 中记录的每个需求收尾时都要重跑的全局 suite / journey / coverage policy
 
 ## 通用规则（CRITICAL）
@@ -34,6 +37,7 @@
 - harness 关注 outcome，不强行约束唯一实现路径
 - 结果必须 grounded：所有通过 / 失败结论都要能追溯到实际执行的命令、automation 路径、coverage 文件或 artifacts
 - required lane 无法执行时，不得宣称验证完成；必须记录 `blocked` 或明确的验证缺口
+- supporting lane 若已由 review 生成但无法执行，也不得静默跳过；必须记录 `skipped` / `blocked` 原因
 - project regression baseline 无法执行时，也不得静默跳过；必须记录 `skipped` / `blocked` 原因
 - 如果当前环境允许，尽量在稳定、干净、可重复的环境下执行；避免共享脏状态导致假阳性 / 假阴性
 - 如果 harness 在 final run 中暴露新的 `error` / `warning`，必须回流到同一轮 `sdd-slim-review`，生成新的 `R*` 或把旧 finding 保持 `deferred`；不能忽略后继续收尾
@@ -45,6 +49,7 @@
 执行要求：
 
 - 运行项目原生的 unit test command，并尽量开启 coverage
+- 如果 unit 是 review 阶段生成的 supporting lane，也应尽量执行；除非明确 blocker
 - 优先遵循项目已有脚本；例如：`npm test -- --coverage`、`pnpm test --coverage`、`pytest --cov`、`go test -coverprofile`、`cargo tarpaulin`
 - 如果项目已有更严格 coverage baseline，遵从项目 baseline
 - 如果项目没有明确 baseline，默认参考常见 harness 做法：`overall >= 80%`，并尽量让 touched files 达到 `80%`
@@ -66,8 +71,11 @@
 
 - 先从 `spec.md` 的 `Acceptance Criteria`、`Verification Strategy`、changed paths 中提取 critical journeys
 - web 验证必须是 browser automation；不接受纯口头手测
-- 优先复用项目现有 E2E suite（Playwright、Cypress 等）
-- 同时仍应使用 agent-browser 做关键路径复现、补洞验证或 artifact 捕获；如果既没有可执行 E2E suite，又无法使用 agent-browser，则记为 blocker
+- Playwright MCP 是默认的 agent 侧浏览器执行入口；先启用浏览器交互工具组，按需补充表单/文件与页面捕获工具组
+- 优先通过 Playwright MCP 覆盖 required journeys，再决定是否补跑项目内现有 E2E suite（Playwright、Cypress 等）
+- 如果 e2e 是 review 阶段生成的 lane，优先保证这些 journeys 已被 Playwright MCP 覆盖；仓库内 Playwright 套件是长期回归资产，可作为 secondary rerun 一并汇总
+- raw CLI / 项目命令只应作为 CI 或显式回归复跑的 secondary path，不应成为唯一或默认的 agent 侧验证证据
+- 如果当前环境无法使用 Playwright MCP，且 spec / 项目基线也未显式允许 secondary path 单独兜底，则记为 blocker
 - 每条 critical journey 至少要有明确目标：happy path、error path、regression path 之一
 - 如果怀疑 flaky，可以对关键路径复跑 3 次并单独记录稳定性；否则至少完整跑 1 次
 

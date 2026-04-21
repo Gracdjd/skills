@@ -42,20 +42,24 @@
 
 - Target Surface: web
 - Required Harness: e2e
+- Supporting Lanes: unit
 - Project Regression:
   - Source File: `.sdd-slim/_project/test.md`
   - Run on Every Feature Close-out: yes
 - Unit Harness:
-  - Command: none required for this feature
-  - Coverage Source: n/a
-  - Minimum Signal: n/a；若仓库已有相关按钮单测，可作为补充信号记录，但不是本轮 release gate
+  - Command: `pnpm test:unit -- checkout-submit`
+  - Coverage Source: stdout + v8
+  - Minimum Signal: 覆盖 submit handler 的 happy path、duplicate guard 与 error recovery；supporting lane 不替代 e2e gate
 - E2E Harness:
-  - Tooling: agent-browser；若仓库已有 checkout e2e suite，可一并复用
+  - Tooling: Playwright MCP 优先；checkout e2e 需要长期保留时落 repo 内 Playwright suite，项目命令仅用于 CI 或显式回归复跑
   - Critical Journeys: J1 提交后进入 loading；J2 loading 期间重复点击被拦截；J3 失败后按钮恢复并展示错误提示
   - Minimum Signal: 所有 critical journeys pass
 - Report Requirements:
-  - Unit Coverage: 允许写 explicit n/a，因为 required harness 是 e2e
+  - Unit Coverage: 即使作为 supporting lane 也要给出实际覆盖率，或写清 blocked / skipped 原因
   - E2E Success Rate: 必须写 passed journeys / total journeys
+- Review-Owned Test Generation:
+  - Source Section: `plan.md` -> `Test Design Handoff`
+  - Expected Output: `src/pages/checkout/__tests__/submit-button.test.tsx` + `tests/checkout-submit.spec.ts`
 
 ## 5. Risks / Follow-ups
 

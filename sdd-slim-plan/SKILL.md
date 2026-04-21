@@ -3,6 +3,7 @@ name: sdd-slim-plan
 description: |
   Use when: 用户希望先把需求文档/需求文本整理成一个按功能目录组织的 canonical artifact set。
   该 skill 会先由主代理直接获取 / 归一化需求，并在 `.sdd-slim/<YYYY.MM.DD>.<feature-name>/` 下生成或更新 `requirement.md`、`spec.md`、`plan.md`、`worklog.md`；同时确保项目级 `.sdd-slim/_project/test.md` 存在。它不写代码，也不自动推进到其他 skill。
+  plan 阶段负责把验证契约写清，包括 feature-level `Verification Strategy` 与 review 可直接落地的 `Test Design Handoff`（unit cases / e2e journeys / suggested test files）；但不生成最终可执行测试代码。
   主代理必须直接分析当前用户输入；如果消息里已有链接就直接抓取，如果没有链接但有需求文本就直接归档，不能先让用户再选择输入类型。
   requirement 归档阶段首先要判断当前输入里是否存在可用的需求文档正文，并去重重复来源 / 重复粘贴内容。
   对每个任务点的代码库探索与 HOW 生成，必须交给 subagent 完成；每个 `P*` 在代码研究完成后都必须通过 `askquestion` 向用户确认一次，即使是简单、看似明确的 `P*` 也不能跳过；若仍有额外阻塞项，再继续逐个 `askquestion` 关闭。
@@ -41,6 +42,7 @@ user-invocable: true
 - 如果用户输入里有重复链接、重复粘贴段落或“链接 + 同内容补充”，必须先去重再归档
 - 必须把 feature artifacts 放进 `.sdd-slim/<YYYY.MM.DD>.<feature-name>/`，避免所有需求产物平铺在 `.sdd-slim/` 根目录
 - 规划阶段必须确保项目级 `.sdd-slim/_project/test.md` 存在；若不存在，本轮创建 skeleton，供后续每个需求的 final verification harness 复用
+- plan 阶段必须把 feature-level `Verification Strategy` 与 `Test Design Handoff` 写清；这些内容供 review 阶段生成最终 unit / e2e 测试用例使用，但 plan 本身不生成测试代码
 - 如果存在阻塞 planning 的 follow-up，主代理必须在写完对应 planning 文档后立即通过 `askquestion` 发出第一个阻塞问题，然后停止等待用户回答
 - requirement 归档由主代理直接执行；如需抓取链接或本地文档正文，由主代理直接调用对应 MCP / 工具
 - 每个 `P*` 在代码研究完成后都必须通过 `askquestion` 做一次用户确认，不得因需求简单或看似明确而跳过

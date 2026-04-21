@@ -5,6 +5,7 @@
 
 - Scope: <feature folder / spec.md / files / diff range>
 - Actionable findings: <R1, R2 ... | none>
+- Generated tests: <TG1, TG2 ... | none>
 - Target classification: <web | non-web | mixed>
 - Required harness: <unit | e2e | hybrid>
 - Validations run: <...>
@@ -18,6 +19,17 @@
 - Suggested repair direction: <what the immediate repair step should target>
 - Suggested validation: <how to verify after fixing>
 - Fix status: open | fixed | deferred
+
+## Generated Tests
+
+### TG1 <short title>
+
+- Lane: <unit | e2e>
+- Source handoff: <P\* / unit cases / journeys>
+- Files: <path/a, path/b>
+- Immediate validation: <command or browser path>
+- Status: generated | updated | blocked
+- Notes: <coverage gap closed / residual gap>
 
 ## Repair Notes
 

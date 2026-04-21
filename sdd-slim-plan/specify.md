@@ -12,7 +12,7 @@
 
 - `requirement.md`：主代理归档后的 canonical 需求来源
 - `spec.md`：薄的 spec 入口文件，只放 what / why / acceptance / verification / high-level risks
-- `plan.md`：planning 明细，承载 `Requirement Breakdown`、`Clarification Log`、`Point Confirmation Log`、`Research Findings`、`Pending User Input`、`Coherence Notes`
+- `plan.md`：planning 明细，承载 `Requirement Breakdown`、`Clarification Log`、`Point Confirmation Log`、`Research Findings`、`Pending User Input`、`Coherence Notes`、`Test Design Handoff`
 - `worklog.md`：执行工作账本；planning 阶段只写 `Task Checklist`，implement / review 再继续回写 `Execution Notes`、`Review Findings`、`Repair Notes`、`Verification Harness Report`
 - `.sdd-slim/_project/test.md`：项目级持久回归基线，记录每个需求收尾时都要重跑的 suite / journey / coverage policy
 
@@ -50,6 +50,7 @@
 - 如果 subagent 返回新的未决问题，必须把它们转成 `Q*` 并继续用 `askquestion` 逐个关闭
 - 如果 requirement 归档阶段或 subagent 已经暴露阻塞性问题，主代理必须在写完文档后立即发出下一个 `askquestion`，不得长时间延后提问
 - 只有当某个 `P*` 已完成代码研究、用户确认、验收标准与验证方式明确后，才能生成 `T*`
+- plan 阶段必须先写清 feature-level `Verification Strategy` 与 `plan.md` 里的 `Test Design Handoff`；这两个产物定义“测什么”，供 review 阶段落地成最终 unit / e2e 测试代码，但 planning 本身不得生成可执行测试文件
 - 所有 `P*` 和 `Q*` 处理完成后，必须执行整体连贯性分析，确认任务可串接且无漏洞
 - 连贯性分析发现漏洞时，必须通过 `askquestion` 向用户确认补充方案
 - planning 完成后直接停止；不得询问是否执行 `sdd-slim-implement`
@@ -174,6 +175,8 @@ prompt 模板见 `prompts/requirement-archive-prompt.md`。
    - HOW 建议
    - 候选任务拆分
    - 验证建议
+   - 候选 unit cases / e2e journeys
+   - 建议测试文件落点
    - 风险
    - 仍需用户补充的信息
 3. 主代理在收到 subagent 返回结果后，先自行审查 HOW 建议是否：
@@ -202,7 +205,7 @@ multiAgent 模式下的补充规则：
 4. `askquestion` 仍然一次只问一个 `P*` 或一个 `Q*`
 5. 若并行探索结果互相冲突、依赖关系不清或出现新的共享阻塞，必须暂停并行收口，必要时转成新的 `Q*` 或重新探索
 
-### 步骤 6：生成 Task Checklist 与 Verification Strategy
+### 步骤 6：生成 Task Checklist、Verification Strategy 与 Test Design Handoff
 
 只有当某个 `P*` 同时满足以下条件时，才生成 `T*`：
 
@@ -216,18 +219,31 @@ multiAgent 模式下的补充规则：
 
 - `Target Surface`
 - `Required Harness`
+- `Supporting Lanes`
 - `Unit Harness`
 - `E2E Harness`
 - `Project Regression`
 - `Report Requirements`
+
+同时，必须先写清 `plan.md` 的 `Test Design Handoff`，至少包含：
+
+- 当前 `P*` 对应的 required lane
+- supporting lanes（如有）
+- 候选 unit cases
+- 候选 e2e journeys
+- 建议测试文件落点
+- 供 review 阶段直接生成测试用例的注意事项
 
 生成规则：
 
 - 如果本轮验收包含 web / browser UI，`Required Harness` 默认是 `e2e`
 - 如果目标不涉及 web / browser UI，`Required Harness` 默认是 `unit`
 - 只有用户明确要求双轨验证，或 spec 已明确两类验证都必须成为 release gate 时，才允许写成 `hybrid`
+- 如果 `Required Harness = e2e` 且当前需求仍存在可稳定隔离的组件 / 逻辑边界，`Supporting Lanes` 默认优先写成 `unit`
+- 如果 `Required Harness = unit` 且当前需求同时涉及 browser journey，`Supporting Lanes` 可写成 `e2e`
 - `Project Regression` 必须引用 `.sdd-slim/_project/test.md`，并写清本需求收尾时至少要重跑哪些项目级基线
 - `Report Requirements` 必须明确：最终报告里 unit coverage 与 e2e success rate 两个字段都要出现；未执行的一侧要给出 `skipped` / `blocked` 原因
+- `Test Design Handoff` 只写测试设计与文件建议，不写最终测试代码；最终 executable tests 由 review 阶段生成或更新
 
 每个 `T*` 至少要有：
 
@@ -243,7 +259,7 @@ multiAgent 模式下的补充规则：
 - 每个 `T*` 的 `Validation` 必须与 feature-level `Required Harness` 相兼容
 - 如果 `Required Harness = e2e`，则至少要能映射到某个 critical journey
 - 如果 `Required Harness = unit`，则至少要能映射到某类 deterministic unit validation 或 coverage 目标
-- 同一个 `P*` 生成的多个 `T*` 应在 `worklog.md` 的 `Task Checklist` 中保持连续，便于 implement 阶段把该 `P*` 作为单个 subagent 实现包处理
+- 同一个 `P*` 生成的多个 `T*` 应在 `worklog.md` 的 `Task Checklist` 中保持连续，便于主 agent 在 T 级实现时审计来源点、判断顺序依赖并做 `P*` 聚合
 
 如果某个 `P*` 还不够清晰：
 

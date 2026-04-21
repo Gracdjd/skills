@@ -57,3 +57,15 @@
 ## 6. Coherence Notes
 
 - Reserved for final planning coherence check
+
+## 7. Test Design Handoff
+
+### P1 <title>
+
+- Required lane: <unit | e2e | hybrid>
+- Supporting lanes: <unit | e2e | none>
+- Unit cases: <U1, U2 ... | none>
+- E2E journeys: <J1, J2 ... | none>
+- Suggested test files: <path/a.spec.ts, path/b.test.tsx | none>
+- Shared fixtures / data setup: <... | none>
+- Review-stage generation notes: <what review should materialize into executable tests>

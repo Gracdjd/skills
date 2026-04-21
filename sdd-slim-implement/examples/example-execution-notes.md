@@ -15,5 +15,5 @@
   - Files: `src/components/SubmitButton.tsx`
   - Validation: manual checkout page regression
   - Deviation: none
-  - Note: button now accepts loading and disabled props after the same P1 implementation package review
+  - Note: button now accepts loading and disabled props as an independent T2 implementation result
 ```
